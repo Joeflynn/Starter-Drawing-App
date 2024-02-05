@@ -99,6 +99,15 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="my-auto flex w-full content-center items-center justify-between gap-4 px-0 py-2">
+                      <ColorField
+                        aria-labelledby="hsb-label-id-1"
+                        className="my-auto"
+                        defaultValue={color}
+                        onChange={setColor}
+                        isDisabled={false}
+                        label="Color"
+                        name="color"
+                      />
                       {/* 
                       <ColorField
                         aria-labelledby="hsb-label-id-1"
