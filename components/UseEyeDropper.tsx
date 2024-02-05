@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PickedColor {
   sRGBHex: string;
@@ -10,16 +8,17 @@ const useEyeDropper = () => {
   const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState<boolean>(false);
-  const EyeDropper = (window as any).EyeDropper;
 
-  const checkSupport = () => {
-    if ("EyeDropper" in window) {
+  // Check support when the component mounts
+  useEffect(() => {
+    if (typeof window !== "undefined" && "EyeDropper" in window) {
       setIsSupported(true);
     }
-  };
+  }, []);
 
   const pickColor = async () => {
-    if (isSupported) {
+    if (isSupported && typeof window !== "undefined") {
+      const EyeDropper = (window as any).EyeDropper;
       const eyeDropper = new EyeDropper();
       try {
         const pickedColor: PickedColor = await eyeDropper.open();
@@ -34,7 +33,7 @@ const useEyeDropper = () => {
     }
   };
 
-  return { color, error, checkSupport, pickColor };
+  return { color, error, isSupported, pickColor };
 };
 
 export default useEyeDropper;

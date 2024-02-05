@@ -17,6 +17,7 @@ import { Eyedropper24Filled } from "@fluentui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { ColorChannel } from "@react-types/color";
+import dynamic from "next/dynamic";
 
 export default function Home() {
   let [color, setColor] = React.useState(
