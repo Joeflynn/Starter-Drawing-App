@@ -14,15 +14,17 @@ const hexToRgb = (hex: string) => {
   };
   
   
-  const rgbToHsv = ({ r, g, b }: { r: number; g: number; b: number }) => {
+  const rgbToHsv = ({ r, g, b}: { r: number; g: number; b: number}) => {
     r /= 255;
     g /= 255;
     b /= 255;
+
   
     let max = Math.max(r, g, b),
       min = Math.min(r, g, b);
-    let h,
-      s,
+      
+    let h = 0,
+      s = 0,
       v = max;
   
     let d = max - min;
