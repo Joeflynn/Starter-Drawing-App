@@ -1,0 +1,180 @@
+{
+    "colors": [
+      {
+        "hex": "#000000",
+        "hsb": "0, 0, 0",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#262626",
+        "hsb": "0, 0, 15",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#595959",
+        "hsb": "0, 0, 35",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#7f7f7f",
+        "hsb": "0, 0, 50",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#a5a5a5",
+        "hsb": "0, 0, 64",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#d9d9d9",
+        "hsb": "0, 0, 85",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#fffdff",
+        "hsb": "300, 0, 100",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#f03b4d",
+        "hsb": "353, 76, 94",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#de285f",
+        "hsb": "336, 76, 87",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#de2974",
+        "hsb": "335, 76, 87",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#cd32ad",
+        "hsb": "307, 71, 68",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#9236b1",
+        "hsb": "285, 68, 69",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#a624a1",
+        "hsb": "302, 76, 63",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#b72c9f",
+        "hsb": "298, 76, 72",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#4254af",
+        "hsb": "234, 61, 69",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#4c61c8",
+        "hsb": "229, 63, 78",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#308ce4",
+        "hsb": "206, 84, 89",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#1d9fee",
+        "hsb": "198, 88, 93",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#23b4df",
+        "hsb": "193, 90, 87",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#03c5d2",
+        "hsb": "183, 98, 76",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#18b180",
+        "hsb": "153, 84, 69",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#c5592a",
+        "hsb": "18, 77, 77",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#ff6e1f",
+        "hsb": "27, 87, 100",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#ff8a1f",
+        "hsb": "33, 87, 100",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#ffb418",
+        "hsb": "39, 87, 100",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#fdc429",
+        "hsb": "44, 97, 99",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#fdcd2a",
+        "hsb": "47, 94, 99",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#f3df38",
+        "hsb": "54, 91, 95",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#479957",
+        "hsb": "113, 52, 60",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#56b068",
+        "hsb": "131, 48, 69",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#64bd55",
+        "hsb": "142, 57, 74",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#bdb847",
+        "hsb": "62, 68, 74",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#a9cc4a",
+        "hsb": "71, 64, 80",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#bcd37d",
+        "hsb": "77, 41, 82",
+        "palette": "Basic Colors"
+      },
+      {
+        "hex": "#afdb76",
+        "hsb": "80, 47, 86",
+        "palette": "Basic Colors"
+      }
+    ]
+  }
+  

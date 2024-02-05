@@ -9,10 +9,11 @@ interface CanvasProps {
   brushSize?: number;
   backgroundColor?: string;
   brushOpacity?: number;
+  brushSoftness?: number;
   activeTool?: string;
 }
 
-const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
+const Canvas: React.FC<CanvasProps> = ({ ...CanvasProps }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -25,8 +26,8 @@ const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
 
     if (context) {
       // Set canvas size
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = CanvasProps.width;
+      canvas.height = CanvasProps.height;
 
       // Add event listeners for drawing
       canvas.addEventListener("mousedown", startDrawing);
@@ -42,7 +43,7 @@ const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
       canvas.removeEventListener("mouseup", stopDrawing);
       canvas.removeEventListener("mouseleave", stopDrawing);
     };
-  }, [width, height]);
+  }, [CanvasProps.width, CanvasProps.height]);
 
   let isDrawing = false;
   let lastX = 0;
@@ -78,7 +79,7 @@ const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
   return (
     <canvas
       ref={canvasRef}
-      style={{ touchAction: "none", background: "white" }}
+      style={{ touchAction: "none", background: CanvasProps.backgroundColor }}
     />
   );
 };
