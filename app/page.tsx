@@ -82,11 +82,7 @@ export default function Home() {
                   <div className="grid gap-4 mx-auto">
                     <div className="h-[0px]  w-[248px] inset-0 z-10">
                       <div className="relative h-[248px] w-[248px] p-0">
-                        <ColorWheel
-                          className=" inset-0 p-0"
-                          value={color}
-                          onChange={setColor}
-                        />
+                        <ColorWheel value={color} onChange={setColor} />
                       </div>
                     </div>
                     <div className="inset-0 mx-auto mt-[-16px] flex h-[248px] w-[248px] content-center justify-center p-[57px] align-middle">
