@@ -33,7 +33,17 @@ const useEyeDropper = () => {
     }
   };
 
-  return { color, error, isSupported, pickColor };
+  return {
+    color: null,
+    error: null,
+    isSupported: true,
+    pickColor: async () => {
+      /* ... */
+    },
+    checkSupport: () => {
+      /* ... */
+    },
+  };
 };
 
 export default useEyeDropper;
