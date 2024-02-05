@@ -30,13 +30,9 @@ export default function Home() {
   const {
     color: eyedropperColor,
     error,
-    checkSupport,
+    isSupported,
     pickColor,
   } = UseEyeDropper();
-
-  useEffect(() => {
-    checkSupport();
-  }, []);
 
   useEffect(() => {
     if (eyedropperColor) {

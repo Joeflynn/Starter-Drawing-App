@@ -34,15 +34,10 @@ const useEyeDropper = () => {
   };
 
   return {
-    color: null,
-    error: null,
-    isSupported: true,
-    pickColor: async () => {
-      /* ... */
-    },
-    checkSupport: () => {
-      /* ... */
-    },
+    color,
+    error,
+    isSupported,
+    pickColor,
   };
 };
 
