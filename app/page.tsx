@@ -34,6 +34,12 @@ export default function Home() {
     pickColor,
   } = UseEyeDropper();
 
+  const handleColorChange = (newColor: Color | null) => {
+    if (newColor !== null) {
+      setColor(newColor);
+    }
+  };
+
   useEffect(() => {
     if (eyedropperColor) {
       const hsv = hexToHsv(eyedropperColor);
@@ -95,16 +101,17 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="my-auto flex w-full content-center items-center justify-between gap-4 px-0 py-2">
+                      <div className="my-auto">
+                        <ColorField
+                          aria-labelledby="hsb-label-id-1"
+                          value={color.toString("hex")}
+                          onChange={handleColorChange}
+                          isDisabled={false}
+                          label="Color"
+                        />
+                      </div>
                       {/* 
-                      <ColorField
-                        aria-labelledby="hsb-label-id-1"
-                        className="my-auto"
-                        defaultValue={color}
-                        onChange={setColor}
-                        isDisabled={false}
-                        label="Color"
-                        name="color"
-                      />
+
                       */}
                       <div className="my-auto flex w-fit content-center items-center justify-between gap-2 py-2">
                         <ColorSwatch

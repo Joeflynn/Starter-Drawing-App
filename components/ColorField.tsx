@@ -8,7 +8,12 @@ import { parseColor } from "@react-stately/color";
 
 import { cn } from "@/lib/utils";
 
-console.log("");
+interface ColorFieldColorProps {
+  "aria-labelledby": string;
+  isDisabled: boolean;
+  value: Color;
+  onChange: Color;
+}
 
 function ColorField(props: ColorFieldProps) {
   let state = useColorFieldState(props);
