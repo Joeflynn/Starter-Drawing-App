@@ -22,7 +22,7 @@ import { ModeToggle } from "@/components/ui/theme-toggle";
 const MenuBar = () => {
   const { setTheme } = useTheme();
   return (
-    <nav className="w-full ">
+    <nav className="w-fit pointer-events-auto">
       <Menubar>
         <MenubarMenu>
           <MenubarTrigger>File</MenubarTrigger>
