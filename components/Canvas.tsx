@@ -22,6 +22,10 @@ interface DrawingCanvasProps {
   brushNormalJitter: number;
   shouldExport: boolean;
   onExportDone: () => void;
+  shouldUndo: boolean;
+  onUndoDone: () => void;
+  shouldRedo: boolean;
+  onRedoDone: () => void;
 }
 
 export const Canvas: React.FC<DrawingCanvasProps> = ({
@@ -37,6 +41,10 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   pressureOpacity,
   shouldExport,
   onExportDone,
+  shouldUndo,
+  onUndoDone,
+  shouldRedo,
+  onRedoDone,
 }) => {
   const hexToRgba = (hex: string, alpha: number): string => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -98,6 +106,8 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     );
     canvasStates.current.push(imageData);
   };
+  // Export the canvas as a jpg when shouldExport is true
+
   useEffect(() => {
     if (shouldExport) {
       // Implement your image export logic here
@@ -112,6 +122,47 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       onExportDone();
     }
   }, [shouldExport, onExportDone]);
+
+  // Assume we have a redoStates ref similar to canvasStates
+  const redoStates = useRef<ImageData[]>([]);
+
+  // Undo the last action when shouldUndo is true
+  useEffect(() => {
+    if (shouldUndo) {
+      const ctx = canvasRef.current!.getContext("2d")!;
+      const lastState = canvasStates.current.pop();
+      if (lastState) {
+        // Push the current state to the redo stack before undoing
+        redoStates.current.push(
+          ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height)
+        );
+        ctx.putImageData(lastState, 0, 0);
+      }
+      console.log("Undoing last action...");
+
+      // After undoing, call onUndoDone to reset the state in the parent
+      onUndoDone();
+    }
+  }, [shouldUndo, onUndoDone]);
+
+  // Redo the last undone action when shouldRedo is true
+  useEffect(() => {
+    if (shouldRedo) {
+      const ctx = canvasRef.current!.getContext("2d")!;
+      const lastRedoState = redoStates.current.pop();
+      if (lastRedoState) {
+        // Push the current state to the undo stack before redoing
+        canvasStates.current.push(
+          ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height)
+        );
+        ctx.putImageData(lastRedoState, 0, 0);
+      }
+      console.log("Redoing last action...");
+
+      // After redoing, call onRedoDone to reset the state in the parent
+      onRedoDone();
+    }
+  }, [shouldRedo, onRedoDone]);
 
   //Sets a background square the canvas background color
   useEffect(() => {

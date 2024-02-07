@@ -147,6 +147,19 @@ export default function Home() {
   const handleExport = () => {
     setShouldExport(true);
   };
+
+  const [shouldUndo, setShouldUndo] = useState(false);
+
+  const handleUndo = () => {
+    setShouldUndo(true);
+  };
+
+  const [shouldRedo, setShouldRedo] = useState(false);
+
+  const handleRedo = () => {
+    setShouldRedo(true);
+  };
+
   const { setTheme } = useTheme();
 
   return (
@@ -524,7 +537,7 @@ export default function Home() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Toggle aria-label="Toggle text tool">
+                  <Toggle aria-label="Undo" onClick={handleUndo}>
                     <ArrowUndo24Filled className="h-5 w-5 pt-[2px]" />
                   </Toggle>
                 </TooltipTrigger>
@@ -537,7 +550,7 @@ export default function Home() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Toggle aria-label="Toggle text tool">
+                  <Toggle aria-label="Redo" onClick={handleRedo}>
                     <ArrowRedo24Filled className="h-5 w-5 pt-[1px]" />
                   </Toggle>
                 </TooltipTrigger>
@@ -573,6 +586,10 @@ export default function Home() {
           brushNormalJitter={brushNormalJitter}
           shouldExport={shouldExport}
           onExportDone={() => setShouldExport(false)}
+          shouldUndo={shouldUndo}
+          onUndoDone={() => setShouldUndo(false)}
+          shouldRedo={shouldRedo}
+          onRedoDone={() => setShouldRedo(false)}
         />
       </CanvasWrapper>
     </main>
