@@ -117,7 +117,7 @@ export default function Home() {
   const [showColorSelector, setShowColorSelector] = useState(false);
 
   return (
-    <main className="grid h-screen w-screen grid-cols-1 grid-rows-1 touch-none p-0 bg-canvas">
+    <main className="grid h-screen w-screen grid-cols-1 grid-rows-1 touch-none p-0 bg-canvas overflow-hidden">
       <div className="pointer-events-none inset-0 z-10 col-start-1 row-start-1 flex h-full w-full flex-col items-start">
         <TopBarWrapper>
           <DropdownAppMenu />
