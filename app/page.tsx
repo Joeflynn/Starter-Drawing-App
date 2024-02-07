@@ -2,6 +2,8 @@
 
 import Canvas from "@/components/Canvas";
 import React, { useEffect, useState, useRef } from "react";
+import { useTheme } from "next-themes";
+
 import MenuBar from "@/components/TopBar";
 //import { ColorSelector } from "./ColorSelector";
 import { Card } from "@/components/ui/card";
@@ -24,6 +26,15 @@ import {
   Drop24Regular,
   Drop24Filled,
   CircleHalfFill24Filled,
+  WeatherSunny24Regular,
+  WeatherMoon24Regular,
+  System24Regular,
+  DarkTheme24Regular,
+  Cut24Regular,
+  Copy24Regular,
+  ClipboardPaste24Regular,
+  Cut16Filled,
+  Copy16Regular,
 } from "@fluentui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -42,6 +53,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { Separator } from "@/components/ui/separator";
 import { Droplet, Highlighter, MinusIcon } from "lucide-react";
 import TopBarWrapper from "@/components/TopBarWrapper";
@@ -116,11 +142,94 @@ export default function Home() {
   }, [eyedropperColor]);
   const [showColorSelector, setShowColorSelector] = useState(false);
 
+  const [shouldExport, setShouldExport] = useState(false);
+
+  const handleExport = () => {
+    setShouldExport(true);
+  };
+  const { setTheme } = useTheme();
+
   return (
     <main className="grid h-screen w-screen grid-cols-1 grid-rows-1 touch-none p-0 bg-canvas overflow-hidden">
       <div className="pointer-events-none inset-0 z-10 col-start-1 row-start-1 flex h-full w-full flex-col items-start">
         <TopBarWrapper>
-          <DropdownAppMenu />
+          <nav className="w-fit pointer-events-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Toggle
+                  className="h-11 w-11 border border-border bg-card p-3"
+                  aria-label="Toggle text tool"
+                >
+                  <Navigation24Filled className="h-5 w-5 " />
+                </Toggle>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>File</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Open</DropdownMenuItem>
+
+                <DropdownMenuItem>Save</DropdownMenuItem>
+                <DropdownMenuItem>Save as</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExport}>
+                  Export
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+
+                <DropdownMenuLabel>System</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <CanvasSettings
+                  width={canvasWidth}
+                  setWidth={setCanvasWidth}
+                  height={canvasHeight}
+                  setHeight={setCanvasHeight}
+                  preset={preset}
+                  setPreset={setPreset}
+                  linked={linked}
+                  setLinked={setLinked}
+                />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <DarkTheme24Regular className="mr-2 h-4 w-4" />
+                    <span>Theme</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => setTheme("system")}>
+                        <System24Regular className="mr-2 h-4 w-4" />
+                        <span>Systen</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme("dark")}>
+                        <WeatherMoon24Regular className="mr-2 h-4 w-4" />
+                        <span>Dark</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setTheme("light")}>
+                        <WeatherSunny24Regular className="mr-2 h-4 w-4" />
+                        <span>Light</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Edit</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  {" "}
+                  <Cut16Filled className="mr-2 h-4 w-4" />
+                  <span>Cut</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  {" "}
+                  <Copy16Regular className="mr-2 h-4 w-4" />
+                  <span>Copy</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  {" "}
+                  <ClipboardPaste24Regular className="mr-2 h-4 w-4" />
+                  <span>Paste</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </nav>
           <Card className="my-auto flex h-12 w-fit content-center items-center justify-between p-1">
             <div className="my-auto flex w-full content-center items-center justify-between gap-1 p-0 pointer-events-auto">
               {tools.map((tool) => (
@@ -377,16 +486,6 @@ export default function Home() {
             )}
           </BrushControl>
           <div className=" mx-auto flex h-full max-w-full grow content-center justify-center"></div>
-          <CanvasSettings
-            width={canvasWidth}
-            setWidth={setCanvasWidth}
-            height={canvasHeight}
-            setHeight={setCanvasHeight}
-            preset={preset}
-            setPreset={setPreset}
-            linked={linked}
-            setLinked={setLinked}
-          />
         </MainAreaWrapper>
         <BottomBarWrapper>
           <ZoomControlsWrapper>
@@ -472,6 +571,8 @@ export default function Home() {
           brushScatter={brushScatter}
           brushTangentJitter={brushTangentJitter}
           brushNormalJitter={brushNormalJitter}
+          shouldExport={shouldExport}
+          onExportDone={() => setShouldExport(false)}
         />
       </CanvasWrapper>
     </main>

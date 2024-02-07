@@ -42,6 +42,7 @@ import { ColorSlider } from "@/components/ColorSlider";
 import React, { useEffect, useState, useRef } from "react";
 import { Color, parseColor, useColorSliderState } from "@react-stately/color";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DropdownMenuItem } from "./ui/dropdown-menu";
 
 interface CanvasSettingsProps {
   //colorBG: Color;
@@ -110,12 +111,13 @@ export const CanvasSettings: React.FC<CanvasSettingsProps> = ({
   };
 
   return (
-    <div className="pointer-events-auto">
+    <>
       <Dialog>
         <DialogTrigger>
-          <Button size="icon" className="h-10 w-10 bg-stone-700">
-            <Options20Regular className="h5 w-5" />
-          </Button>
+          <DropdownMenuItem>
+            <Options20Regular />
+            <span>Canvas settings</span>
+          </DropdownMenuItem>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -219,7 +221,7 @@ export const CanvasSettings: React.FC<CanvasSettingsProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 

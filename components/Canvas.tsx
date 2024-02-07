@@ -20,6 +20,8 @@ interface DrawingCanvasProps {
   brushScatter: number;
   brushTangentJitter: number;
   brushNormalJitter: number;
+  shouldExport: boolean;
+  onExportDone: () => void;
 }
 
 export const Canvas: React.FC<DrawingCanvasProps> = ({
@@ -33,6 +35,8 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   activeTool,
   pressureSize,
   pressureOpacity,
+  shouldExport,
+  onExportDone,
 }) => {
   const hexToRgba = (hex: string, alpha: number): string => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -94,6 +98,30 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     );
     canvasStates.current.push(imageData);
   };
+  useEffect(() => {
+    if (shouldExport) {
+      // Implement your image export logic here
+      const dataUrl = canvasRef.current!.toDataURL("image/jpeg");
+      const link = document.createElement("a");
+      link.download = "canvas.jpg";
+      link.href = dataUrl;
+      link.click();
+      console.log("Exporting image...");
+
+      // After exporting, call onExportDone to reset the state in the parent
+      onExportDone();
+    }
+  }, [shouldExport, onExportDone]);
+
+  //Sets a background square the canvas background color
+  useEffect(() => {
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d")!;
+      ctx.fillStyle = canvasColor;
+      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
+  }, [canvasColor]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const ctx = canvasRef.current!.getContext("2d")!;
@@ -186,15 +214,6 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const handlePointerUp = () => {
     setIsDrawing(false);
   };
-
-  //Sets a background square the canvas background color
-  useEffect(() => {
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d")!;
-      ctx.fillStyle = canvasColor;
-      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    }
-  }, [canvasColor]);
 
   return (
     <canvas
