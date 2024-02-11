@@ -78,6 +78,7 @@ import ZoomControlsWrapper from "@/components/ZoomControlsWrapper";
 import UndoRedoWrapper from "@/components/UndoRedoWrapper";
 import MainAreaWrapper from "@/components/MainAreaWrapper";
 import DropdownAppMenu from "@/components/DropdownAppMenu";
+import BrushControlsFlyout from "@/components/BrushControlsFlyout";
 
 export default function Home() {
   const [brushFlow, setBrushFlow] = useState(0.45);
@@ -158,6 +159,18 @@ export default function Home() {
 
   const handleRedo = () => {
     setShouldRedo(true);
+  };
+
+  const [shouldZoomIn, setShouldZoomIn] = useState(false);
+
+  const handleZoomIn = () => {
+    setShouldZoomIn(true);
+  };
+
+  const [shouldZoomOut, setShouldZoomOut] = useState(false);
+
+  const handleZoomOut = () => {
+    setShouldZoomOut(true);
   };
 
   const { setTheme } = useTheme();
@@ -368,134 +381,128 @@ export default function Home() {
               <Options24Regular className="h-5 w-5" />
             </Toggle>
             {showBrushControls && (
-              <div className="absolute top-0 left-0 pt-40 pl-1 pointer-events-none">
-                <Card className="ml-16 mt-0 overflow-hidden pointer-events-auto	">
-                  <div className="flex h-fit inset-y-0 w-fit max-w-[480px] flex-col items-start justify-start content-start py-8 px-8 gap-4">
-                    <h3 className="font-semibold leading-none">
-                      Brush Settings
-                    </h3>
-                    <LabeledSlider
-                      label="Softness"
-                      defaultValue={brushSoftness}
-                      minValue={0}
-                      maxValue={1}
-                      step={0.01}
-                      onChange={setBrushSoftness}
-                    />
-                    <LabeledSlider
-                      label="Spacing"
-                      defaultValue={brushSpacing}
-                      minValue={0.1}
-                      maxValue={1}
-                      step={0.01}
-                      onChange={setBrushSpacing}
-                    />
-                    <LabeledSlider label="Rotation" />
-                    <LabeledSlider
-                      label="flow jitter"
-                      defaultValue={brushFlowJitter}
-                      minValue={0}
-                      maxValue={1}
-                      step={0.01}
-                      onChange={setBrushFlowJitter}
-                    />
+              <BrushControlsFlyout>
+                <h3 className="font-semibold leading-none">Brush Settings</h3>
+                <LabeledSlider
+                  label="Softness"
+                  defaultValue={brushSoftness}
+                  minValue={0}
+                  maxValue={1}
+                  step={0.01}
+                  onChange={setBrushSoftness}
+                />
+                <LabeledSlider
+                  label="Spacing"
+                  defaultValue={brushSpacing}
+                  minValue={0.1}
+                  maxValue={1}
+                  step={0.01}
+                  onChange={setBrushSpacing}
+                />
+                <LabeledSlider label="Rotation" />
+                <LabeledSlider
+                  label="flow jitter"
+                  defaultValue={brushFlowJitter}
+                  minValue={0}
+                  maxValue={1}
+                  step={0.01}
+                  onChange={setBrushFlowJitter}
+                />
 
-                    <LabeledSlider
-                      label="Size jitter"
-                      defaultValue={brushSizeJitter}
-                      minValue={0.1}
-                      maxValue={1}
-                      step={0.01}
-                      onChange={setBrushSizeJitter}
-                    />
+                <LabeledSlider
+                  label="Size jitter"
+                  defaultValue={brushSizeJitter}
+                  minValue={0.1}
+                  maxValue={1}
+                  step={0.01}
+                  onChange={setBrushSizeJitter}
+                />
 
-                    <LabeledSlider
-                      label="Rotation jitter"
-                      defaultValue={brushRotationJitter}
-                      minValue={0}
-                      maxValue={90}
-                      step={1}
-                      onChange={setBrushRotationJitter}
-                    />
+                <LabeledSlider
+                  label="Rotation jitter"
+                  defaultValue={brushRotationJitter}
+                  minValue={0}
+                  maxValue={90}
+                  step={1}
+                  onChange={setBrushRotationJitter}
+                />
 
-                    <LabeledSlider
-                      label="Scatter"
-                      defaultValue={brushScatter}
-                      minValue={0}
-                      maxValue={1}
-                      step={0.01}
-                      onChange={setBrushScatter}
-                    />
+                <LabeledSlider
+                  label="Scatter"
+                  defaultValue={brushScatter}
+                  minValue={0}
+                  maxValue={1}
+                  step={0.01}
+                  onChange={setBrushScatter}
+                />
 
-                    <LabeledSlider
-                      label="Tangent jitter"
-                      defaultValue={brushTangentJitter}
-                      minValue={0.1}
-                      maxValue={1}
-                      step={0.01}
-                      onChange={setBrushTangentJitter}
-                    />
+                <LabeledSlider
+                  label="Tangent jitter"
+                  defaultValue={brushTangentJitter}
+                  minValue={0.1}
+                  maxValue={1}
+                  step={0.01}
+                  onChange={setBrushTangentJitter}
+                />
 
-                    <LabeledSlider
-                      label="Normal jitter"
-                      defaultValue={brushNormalJitter}
-                      minValue={0.1}
-                      maxValue={1}
-                      step={0.01}
-                      onChange={setBrushNormalJitter}
-                    />
+                <LabeledSlider
+                  label="Normal jitter"
+                  defaultValue={brushNormalJitter}
+                  minValue={0.1}
+                  maxValue={1}
+                  step={0.01}
+                  onChange={setBrushNormalJitter}
+                />
 
-                    <LabeledSlider
-                      label="Opacity"
-                      defaultValue={brushOpacity}
-                      minValue={0}
-                      maxValue={1}
-                      step={0.01}
-                      onChange={setBrushOpacity}
-                    />
+                <LabeledSlider
+                  label="Opacity"
+                  defaultValue={brushOpacity}
+                  minValue={0}
+                  maxValue={1}
+                  step={0.01}
+                  onChange={setBrushOpacity}
+                />
 
-                    <div className="items-top flex space-x-2">
-                      <Checkbox
-                        id="pressureSize"
-                        aria-label="Pressure affects size"
-                        defaultChecked={pressureSize}
-                        onChange={() => setPressureSize(!pressureSize)}
-                      />
-                      <div className="grid gap-1.5 leading-none">
-                        <label
-                          htmlFor="pressureSize"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Size
-                        </label>
-                        <p className="text-sm text-muted-foreground">
-                          Pen pressure affects size
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="items-top flex space-x-2">
-                      <Checkbox
-                        id="pressureOpacity"
-                        aria-label="Pressure affects size"
-                        defaultChecked={true}
-                        onChange={() => {}}
-                      />
-                      <div className="grid gap-1.5 leading-none">
-                        <label
-                          htmlFor="pressureOpacity"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Opacity
-                        </label>
-                        <p className="text-sm text-muted-foreground">
-                          Pen pressure affects Opacity
-                        </p>
-                      </div>
-                    </div>
+                <div className="items-top flex space-x-2">
+                  <Checkbox
+                    id="pressureSize"
+                    aria-label="Pressure affects size"
+                    defaultChecked={pressureSize}
+                    onChange={() => setPressureSize(!pressureSize)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="pressureSize"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Size
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                      Pen pressure affects size
+                    </p>
                   </div>
-                </Card>
-              </div>
+                </div>
+
+                <div className="items-top flex space-x-2">
+                  <Checkbox
+                    id="pressureOpacity"
+                    aria-label="Pressure affects size"
+                    defaultChecked={true}
+                    onChange={() => {}}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="pressureOpacity"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Opacity
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                      Pen pressure affects Opacity
+                    </p>
+                  </div>
+                </div>
+              </BrushControlsFlyout>
             )}
           </BrushControl>
           <div className=" mx-auto flex h-full max-w-full grow content-center justify-center"></div>
@@ -505,7 +512,7 @@ export default function Home() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Toggle aria-label="Toggle text tool">
+                  <Toggle aria-label="Toggle text tool" onClick={handleZoomIn}>
                     <Add16Filled className="h-5 w-5 " />
                   </Toggle>
                 </TooltipTrigger>
@@ -523,7 +530,7 @@ export default function Home() {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Toggle aria-label="Toggle text tool">
+                  <Toggle aria-label="Toggle text tool" onClick={handleZoomOut}>
                     <MinusIcon className="h-5 w-5 " />
                   </Toggle>
                 </TooltipTrigger>
@@ -562,7 +569,6 @@ export default function Home() {
           </UndoRedoWrapper>
         </BottomBarWrapper>
       </div>
-
       <CanvasWrapper>
         <Canvas
           canvasWidth={canvasWidth}
@@ -590,6 +596,10 @@ export default function Home() {
           onUndoDone={() => setShouldUndo(false)}
           shouldRedo={shouldRedo}
           onRedoDone={() => setShouldRedo(false)}
+          shouldZoomIn={shouldZoomIn}
+          onZoomInDone={() => setShouldZoomIn(false)}
+          shouldZoomOut={shouldZoomOut}
+          onZoomOutDone={() => setShouldZoomOut(false)}
         />
       </CanvasWrapper>
     </main>

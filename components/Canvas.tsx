@@ -26,6 +26,10 @@ interface DrawingCanvasProps {
   onUndoDone: () => void;
   shouldRedo: boolean;
   onRedoDone: () => void;
+  shouldZoomIn: boolean;
+  onZoomInDone: () => void;
+  shouldZoomOut: boolean;
+  onZoomOutDone: () => void;
 }
 
 export const Canvas: React.FC<DrawingCanvasProps> = ({
@@ -45,6 +49,19 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   onUndoDone,
   shouldRedo,
   onRedoDone,
+  brushSpacing,
+  brushTangentJitter,
+  brushNormalJitter,
+  brushFlowJitter,
+  brushSizeJitter,
+  brushRotationJitter,
+  brushScatter,
+  brushOpacity,
+  brushRotation,
+  shouldZoomIn,
+  onZoomInDone,
+  shouldZoomOut,
+  onZoomOutDone,
 }) => {
   const hexToRgba = (hex: string, alpha: number): string => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -67,6 +84,15 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   const [isErasing, setIsErasing] = useState<boolean>(false);
   const [isSmudging, setIsSmudging] = useState<boolean>(false);
+
+  //Sets a background square the canvas background color
+  useEffect(() => {
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d")!;
+      ctx.fillStyle = canvasColor;
+      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
+  }, [canvasColor]);
 
   useEffect(() => {
     setIsErasing(activeTool === "eraser");
@@ -104,6 +130,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       canvasRef.current!.width,
       canvasRef.current!.height
     );
+
     canvasStates.current.push(imageData);
   };
   // Export the canvas as a jpg when shouldExport is true
@@ -164,15 +191,6 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     }
   }, [shouldRedo, onRedoDone]);
 
-  //Sets a background square the canvas background color
-  useEffect(() => {
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d")!;
-      ctx.fillStyle = canvasColor;
-      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    }
-  }, [canvasColor]);
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const ctx = canvasRef.current!.getContext("2d")!;
@@ -205,14 +223,30 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   }, []);
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const spacingRatio = brushSpacing;
+    const jitterTangent = brushTangentJitter * 50; // Set the maximum offset along the direction of the line (tangential)
+    const jitterNormal = brushNormalJitter * 50; // Set the maximum offset perpendicular to the direction of the line (normal)
+    const jitterRotation = brushRotationJitter; // Set the maximum rotation of the stamp in radians
+
     if (!isDrawing) return;
 
     const rect = canvasRef.current!.getBoundingClientRect();
     const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     const dist = distanceBetween(lastPoint!, currentPoint);
     const angle = angleBetween(lastPoint!, currentPoint);
-    const pressure = pressureSize ? e.pressure : 0.5;
-    const brushSize = brushWidth * (pressure * 2);
+    let pressure = e.pressure;
+
+    // Check for invalid pressure values and log detailed information
+    if (isNaN(pressure) || pressure < 0 || pressure > 1) {
+      console.warn("Invalid pressure value detected:", pressure, "Event:", e);
+      pressure = 0.5; // Fallback value
+    }
+
+    // Clamp pressure to a valid range
+    pressure = Math.max(0.0001, Math.min(pressure, 1));
+
+    const brushSize = brushWidth * pressure;
+    const stampSpacing = brushSize * spacingRatio; // Calculating the spacing between stamps based on the ratio
 
     const ctx = canvasRef.current!.getContext("2d")!;
     ctx.lineJoin = ctx.lineCap = "round";
@@ -228,9 +262,20 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       ctx.globalCompositeOperation = "source-over";
     }
 
-    for (let i = 0; i < dist; i += 5) {
-      const x = lastPoint!.x + Math.sin(angle) * i;
-      const y = lastPoint!.y + Math.cos(angle) * i;
+    for (let i = 0; i < dist; i += stampSpacing) {
+      const randomTangent = Math.random() * jitterTangent - jitterTangent / 2;
+      const randomNormal = Math.random() * jitterNormal - jitterNormal / 2;
+
+      const x =
+        lastPoint!.x +
+        Math.sin(angle) * i +
+        Math.sin(angle) * randomTangent -
+        Math.cos(angle) * randomNormal;
+      const y =
+        lastPoint!.y +
+        Math.cos(angle) * i +
+        Math.cos(angle) * randomTangent +
+        Math.sin(angle) * randomNormal;
 
       const radgrad = ctx.createRadialGradient(
         x,
@@ -251,6 +296,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
     setLastPoint(currentPoint);
   };
+
   useEffect(() => {
     return () => {
       if (canvasRef.current) {
