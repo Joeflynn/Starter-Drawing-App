@@ -81,12 +81,12 @@ import DropdownAppMenu from "@/components/DropdownAppMenu";
 import BrushControlsFlyout from "@/components/BrushControlsFlyout";
 
 export default function Home() {
-  const [brushFlow, setBrushFlow] = useState(0.45);
-  let [brushSize, setBrushSize] = React.useState(50);
+  const [brushFlow, setBrushFlow] = useState(0.25);
+  let [brushSize, setBrushSize] = React.useState(100);
   let [brushSoftness, setBrushSoftness] = React.useState(0.5);
   let [brushOpacity, setBrushOpacity] = React.useState(1.0);
   let [brushRotation, setBrushRotation] = React.useState(0.0);
-  let [brushSpacing, setBrushSpacing] = React.useState(0.1);
+  let [brushSpacing, setBrushSpacing] = React.useState(0.9);
   let [brushBlendMode, setBrushBlendMode] = React.useState("normal");
   let [brushFlowJitter, setBrushFlowJitter] = React.useState(0.0);
   let [brushSizeJitter, setBrushSizeJitter] = React.useState(0.1);
@@ -361,7 +361,7 @@ export default function Home() {
                 value={brushSize}
                 onChange={setBrushSize}
                 minValue={12}
-                maxValue={200}
+                maxValue={400}
                 step={1}
               />
               <CircleHalfFill24Filled className="h-4 w-4" />
@@ -370,7 +370,8 @@ export default function Home() {
                 aria-label="Flow"
                 value={brushFlow}
                 onChange={setBrushFlow}
-                maxValue={0.7}
+                minValue={0.01}
+                maxValue={0.5}
                 step={0.01}
               />
             </div>
@@ -386,7 +387,7 @@ export default function Home() {
                 <LabeledSlider
                   label="Softness"
                   defaultValue={brushSoftness}
-                  minValue={0}
+                  minValue={0.01}
                   maxValue={1}
                   step={0.01}
                   onChange={setBrushSoftness}

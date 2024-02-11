@@ -72,8 +72,8 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   const canvasStates = useRef<Array<ImageData>>([]);
 
-  const brushColor1Rgba = hexToRgba(brushColor, brushFlow);
-  const brushColor2Rgba = hexToRgba(brushColor, brushFlow / 2);
+  const brushColor1Rgba = hexToRgba(brushColor, brushOpacity);
+  const brushColor2Rgba = hexToRgba(brushColor, brushOpacity / 2);
   const brushColor3Rgba = hexToRgba(brushColor, 0.0);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -223,10 +223,11 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   }, []);
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const spacingRatio = brushSpacing;
-    const jitterTangent = brushTangentJitter * 50; // Set the maximum offset along the direction of the line (tangential)
-    const jitterNormal = brushNormalJitter * 50; // Set the maximum offset perpendicular to the direction of the line (normal)
-    const jitterRotation = brushRotationJitter; // Set the maximum rotation of the stamp in radians
+    const spacingRatio = brushSpacing / 10; // Set the spacing between stamps as a ratio of the brush size
+    const jitterTangent = brushTangentJitter * 100; // Set the maximum offset along the direction of the line (tangential)
+    const jitterNormal = brushNormalJitter * 100; // Set the maximum offset perpendicular to the direction of the line (normal)
+    const jitterSize = brushSizeJitter * 100; // Set the maximum variation in the size of the stamp
+    const softness = brushSoftness + 0.001; // Set the softness of the brush
 
     if (!isDrawing) return;
 
@@ -244,13 +245,14 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
     // Clamp pressure to a valid range
     pressure = Math.max(0.0001, Math.min(pressure, 1));
+    const randomSize = Math.random() * jitterSize - jitterSize / 2;
 
-    const brushSize = brushWidth * pressure;
-    const stampSpacing = brushSize * spacingRatio; // Calculating the spacing between stamps based on the ratio
+    const brushSize = brushWidth * pressure + randomSize;
+    const stampSpacing = brushWidth * spacingRatio; // Calculating the spacing between stamps based on the ratio
 
     const ctx = canvasRef.current!.getContext("2d")!;
     ctx.lineJoin = ctx.lineCap = "round";
-    ctx.globalAlpha = pressure;
+    ctx.globalAlpha = pressure * brushFlow;
 
     // Check if erasing mode is on
     if (isErasing) {
