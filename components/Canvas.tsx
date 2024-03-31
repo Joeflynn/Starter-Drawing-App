@@ -70,6 +70,8 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  const zoomFactor = 1.1;
+
   const canvasStates = useRef<Array<ImageData>>([]);
 
   const brushColor1Rgba = hexToRgba(brushColor, brushOpacity);
@@ -85,14 +87,29 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const [isErasing, setIsErasing] = useState<boolean>(false);
   const [isSmudging, setIsSmudging] = useState<boolean>(false);
 
-  //Sets a background square the canvas background color
+  const brushCanvas = document.createElement("canvas");
+  const brushCtx = brushCanvas.getContext("2d")!;
+
+  const [zoomLevel, setZoomLevel] = useState(1);
+
   useEffect(() => {
     if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d")!;
+      const ctx = canvasRef.current.getContext("2d", {
+        willReadFrequently: true,
+      })!;
       ctx.fillStyle = canvasColor;
       ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      ctx.scale(zoomLevel, zoomLevel);
     }
-  }, [canvasColor]);
+  }, [canvasColor, canvasHeight, canvasWidth, zoomLevel]);
+
+  const zoomIn = () => {
+    setZoomLevel((prevZoomLevel) => prevZoomLevel + 0.1);
+  };
+
+  const zoomOut = () => {
+    setZoomLevel((prevZoomLevel) => prevZoomLevel - 0.1);
+  };
 
   useEffect(() => {
     setIsErasing(activeTool === "eraser");
@@ -118,12 +135,38 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     return Math.atan2(point2.x - point1.x, point2.y - point1.y);
   };
 
+  const [smudge, setSmudge] = useState<ImageData | null>(null);
+
+  const createFeatherGradient = (radius: number, softness: number) => {
+    const gradient = brushCtx.createRadialGradient(
+      radius,
+      radius,
+      radius * softness,
+      radius,
+      radius,
+      radius
+    );
+    gradient.addColorStop(0, "rgba(0, 0, 0, 1)");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+    return gradient;
+  };
+
+  const [copy, setCopy] = useState<ImageData | null>(null);
+
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     setIsDrawing(true);
     const rect = canvasRef.current!.getBoundingClientRect();
-    setLastPoint({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    setLastPoint(currentPoint);
     const ctx = canvasRef.current!.getContext("2d")!;
+    const copyWidth = brushWidth;
+    const copyHeight = brushWidth;
+    const copyX = currentPoint.x - copyWidth / 2;
+    const copyY = currentPoint.y - copyHeight / 2;
+    const initialCopy = ctx.getImageData(copyX, copyY, copyWidth, copyHeight);
+    setCopy(initialCopy);
+
     const imageData = ctx.getImageData(
       0,
       0,
@@ -190,6 +233,19 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       onRedoDone();
     }
   }, [shouldRedo, onRedoDone]);
+
+  useEffect(() => {
+    const ctx = canvasRef.current!.getContext("2d")!;
+    const lastState = canvasStates.current[canvasStates.current.length - 1];
+    if (lastState) {
+      // Resize the canvas
+      ctx.canvas.width = canvasWidth;
+      ctx.canvas.height = canvasHeight;
+
+      // Put the last state on the canvas
+      ctx.putImageData(lastState, 0, 0);
+    }
+  }, [canvasHeight, canvasWidth]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -264,36 +320,89 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       ctx.globalCompositeOperation = "source-over";
     }
 
-    for (let i = 0; i < dist; i += stampSpacing) {
-      const randomTangent = Math.random() * jitterTangent - jitterTangent / 2;
-      const randomNormal = Math.random() * jitterNormal - jitterNormal / 2;
+    if (isSmudging) {
+      // Perform the smudge effect
+      const prevPoint = lastPoint!;
+      const dist = distanceBetween(prevPoint, currentPoint);
+      const angle = angleBetween(prevPoint, currentPoint);
+      // Set up the feathered brush
+      const radius = brushSize / 2;
+      brushCanvas.width = brushSize;
+      brushCanvas.height = brushSize;
+      brushCtx.clearRect(0, 0, brushSize, brushSize);
+      brushCtx.globalCompositeOperation = "source-over";
+      let tempCanvas = document.createElement("canvas");
+      let tempCtx = tempCanvas.getContext("2d");
+      if (tempCtx !== null && copy !== null) {
+        tempCanvas.width = copy.width;
+        tempCanvas.height = copy.height;
+        tempCtx.putImageData(copy, 0, 0);
+        // Now you can use tempCanvas as a CanvasImageSource in a drawImage call
+        brushCtx.drawImage(tempCanvas, 0, 0);
+      }
+      //  brushCtx.drawImage(copy, 0, 0);
 
-      const x =
-        lastPoint!.x +
-        Math.sin(angle) * i +
-        Math.sin(angle) * randomTangent -
-        Math.cos(angle) * randomNormal;
-      const y =
-        lastPoint!.y +
-        Math.cos(angle) * i +
-        Math.cos(angle) * randomTangent +
-        Math.sin(angle) * randomNormal;
+      // Apply the feathered effect to the brush canvas
+      brushCtx.globalCompositeOperation = "destination-in";
+      brushCtx.fillStyle = createFeatherGradient(radius, brushSoftness);
+      brushCtx.fillRect(0, 0, brushSize, brushSize);
 
-      const radgrad = ctx.createRadialGradient(
-        x,
-        y,
-        brushSize / 4,
-        x,
-        y,
-        brushSize / 2
-      );
+      for (let i = 0; i < dist; i += 1) {
+        const x = prevPoint.x + Math.sin(angle) * i;
+        const y = prevPoint.y + Math.cos(angle) * i;
 
-      radgrad.addColorStop(0, brushColor1Rgba);
-      radgrad.addColorStop(brushSoftness, brushColor2Rgba);
-      radgrad.addColorStop(1, brushColor3Rgba);
+        // Draw the feathered brush at the current position
+        ctx.globalCompositeOperation = "source-over";
+        ctx.drawImage(brushCanvas, x - radius, y - radius);
 
-      ctx.fillStyle = radgrad;
-      ctx.fillRect(x - brushSize / 2, y - brushSize / 2, brushSize, brushSize);
+        // Capture a new copy of the canvas at the current position
+        const newCopyX = x - radius;
+        const newCopyY = y - radius;
+        const newCopy = ctx.getImageData(
+          newCopyX,
+          newCopyY,
+          brushSize,
+          brushSize
+        );
+        setCopy(newCopy);
+      }
+    } else {
+      for (let i = 0; i < dist; i += stampSpacing) {
+        const randomTangent = Math.random() * jitterTangent - jitterTangent / 2;
+        const randomNormal = Math.random() * jitterNormal - jitterNormal / 2;
+
+        const x =
+          lastPoint!.x +
+          Math.sin(angle) * i +
+          Math.sin(angle) * randomTangent -
+          Math.cos(angle) * randomNormal;
+        const y =
+          lastPoint!.y +
+          Math.cos(angle) * i +
+          Math.cos(angle) * randomTangent +
+          Math.sin(angle) * randomNormal;
+
+        const radgrad = ctx.createRadialGradient(
+          x,
+          y,
+          brushSize / 4,
+          x,
+          y,
+          brushSize / 2
+        );
+
+        radgrad.addColorStop(0, brushColor1Rgba);
+        radgrad.addColorStop(brushSoftness, brushColor2Rgba);
+        radgrad.addColorStop(1, brushColor3Rgba);
+
+        ctx.fillStyle = radgrad;
+        ctx.fillRect(
+          x - brushSize / 2,
+          y - brushSize / 2,
+          brushSize,
+          brushSize
+        );
+      }
     }
 
     setLastPoint(currentPoint);

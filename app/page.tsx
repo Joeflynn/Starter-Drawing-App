@@ -99,8 +99,6 @@ export default function Home() {
 
   const [canvasWidth, setCanvasWidth] = useState(1200);
   const [canvasHeight, setCanvasHeight] = useState(800);
-  const [width, setWidth] = useState(null);
-  const [height, setHeight] = useState(null);
   const [preset, setPreset] = useState("HD");
   const [linked, setLinked] = useState(false);
 
@@ -203,16 +201,7 @@ export default function Home() {
 
                 <DropdownMenuLabel>System</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <CanvasSettings
-                  width={canvasWidth}
-                  setWidth={setCanvasWidth}
-                  height={canvasHeight}
-                  setHeight={setCanvasHeight}
-                  preset={preset}
-                  setPreset={setPreset}
-                  linked={linked}
-                  setLinked={setLinked}
-                />
+
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <DarkTheme24Regular className="mr-2 h-4 w-4" />
@@ -506,7 +495,21 @@ export default function Home() {
               </BrushControlsFlyout>
             )}
           </BrushControl>
-          <div className=" mx-auto flex h-full max-w-full grow content-center justify-center"></div>
+          <div className=" mx-auto flex h-full max-w-full grow content-center justify-center">
+            {" "}
+          </div>
+          <div className=" mx-auto flex h-full flex-col content-center space-y-5 py-2">
+            <CanvasSettings
+              width={canvasWidth}
+              setWidth={setCanvasWidth}
+              height={canvasHeight}
+              setHeight={setCanvasHeight}
+              preset={preset}
+              setPreset={setPreset}
+              linked={linked}
+              setLinked={setLinked}
+            />
+          </div>
         </MainAreaWrapper>
         <BottomBarWrapper>
           <ZoomControlsWrapper>

@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import BrushPreview from "../public/brush-stroke-preview-example.jpg";
 
 import {
   CalligraphyPen24Regular,

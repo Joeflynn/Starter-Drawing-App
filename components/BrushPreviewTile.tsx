@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
-import BrushStroke from "../public/brushstroke.png";
+import BrushStroke from "../public/brush-stroke-preview-example.jpg";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface BrushPreviewTileProps {
@@ -29,9 +29,13 @@ export const BrushPreviewTile: React.FC<BrushPreviewTileProps> = ({
           {brushName}
         </small>
       </div>
-      <AspectRatio ratio={23 / 7} className=" h-10 w-full pr-4">
+      <AspectRatio
+        ratio={23 / 7}
+        className=" h-10 w-full pr-4 mix-blend-exclusion"
+      >
         <Image
-          src={imgPathURL}
+          // src={imgPathURL}
+          src={BrushStroke}
           alt={{ brushName } + "Brush stroke preview example"}
           fill
           className="mb-0 h-10 w-full object-cover pr-4 mix-blend-multiply"

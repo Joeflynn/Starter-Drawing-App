@@ -42,7 +42,6 @@ import { ColorSlider } from "@/components/ColorSlider";
 import React, { useEffect, useState, useRef } from "react";
 import { Color, parseColor, useColorSliderState } from "@react-stately/color";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DropdownMenuItem } from "./ui/dropdown-menu";
 
 interface CanvasSettingsProps {
   //colorBG: Color;
@@ -72,8 +71,8 @@ export const CanvasSettings: React.FC<CanvasSettingsProps> = ({
   //  let [hChannel, sChannel, bChannel] = colorBG.getColorChannels();
 
   useEffect(() => {
-    setWidth(window.innerWidth);
-    setHeight(window.innerHeight);
+    setWidth(window.innerWidth - 1);
+    setHeight(window.innerHeight - 1);
   }, []);
 
   const handleWidthChange = (newWidth: number) => {
@@ -111,13 +110,12 @@ export const CanvasSettings: React.FC<CanvasSettingsProps> = ({
   };
 
   return (
-    <>
+    <div className="pointer-events-auto">
       <Dialog>
         <DialogTrigger>
-          <DropdownMenuItem>
-            <Options20Regular />
-            <span>Canvas settings</span>
-          </DropdownMenuItem>
+          <Button size="icon" className="h-10 w-10 bg-stone-700">
+            <Options20Regular className="h5 w-5" />
+          </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -221,15 +219,13 @@ export const CanvasSettings: React.FC<CanvasSettingsProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };
 
 {
   /* 
 //BG Color selection popover control
-
-
             <div className="grid w-full max-w-sm items-center gap-2">
               <Label htmlFor="Background Color">Background Color</Label>
  <Popover>
@@ -280,7 +276,6 @@ export const CanvasSettings: React.FC<CanvasSettingsProps> = ({
                     </div>
                   </PopoverContent>
                 </Popover>
-
                                      <div className="flex w-full flex-row items-center justify-start gap-4 pr-36"></div>
                       <div className="flex items-center space-x-2 py-4">
                         <Checkbox id="terms" />
