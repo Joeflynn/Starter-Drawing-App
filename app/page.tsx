@@ -40,10 +40,8 @@ import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 
 import { ColorChannel } from "@react-types/color";
-import dynamic from "next/dynamic";
 import { ToolButton } from "@/components/ToolButton";
 import BrushSlider from "@/components/BrushSlider";
-import { CanvasSettings } from "@/components/CanvasSettings";
 import BrushControl from "@/components/BrushControl";
 import { Checkbox } from "@/components/ui/checkbox";
 import LabeledSlider from "@/components/LabeledSlider";
@@ -79,6 +77,12 @@ import UndoRedoWrapper from "@/components/UndoRedoWrapper";
 import MainAreaWrapper from "@/components/MainAreaWrapper";
 import DropdownAppMenu from "@/components/DropdownAppMenu";
 import BrushControlsFlyout from "@/components/BrushControlsFlyout";
+
+import dynamic from "next/dynamic";
+
+import { CanvasSettings } from "@/components/CanvasSettings";
+
+// Then you can use <ClientSideComponent /> in your main component
 
 export default function Home() {
   const [brushFlow, setBrushFlow] = useState(0.25);

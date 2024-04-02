@@ -187,9 +187,9 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   useEffect(() => {
     if (shouldExport) {
       // Implement your image export logic here
-      const dataUrl = canvasRef.current!.toDataURL("image/jpeg");
+      const dataUrl = canvasRef.current!.toDataURL("image/png");
       const link = document.createElement("a");
-      link.download = "canvas.jpg";
+      link.download = "canvas.png";
       link.href = dataUrl;
       link.click();
       console.log("Exporting image...");
@@ -271,21 +271,24 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       } else if ((e.key === "s" || e.key === "S") && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         // If Ctrl/Cmd+S is pressed, save the canvas as a jpg
-        const dataUrl = canvasRef.current!.toDataURL("image/jpeg");
+        const dataUrl = canvasRef.current!.toDataURL("image/png");
         const link = document.createElement("a");
-        link.download = "canvas.jpg";
+        link.download = "canvas.png";
         link.href = dataUrl;
         link.click();
         console.log("DrawingCanvas.tsx: handleKeyDown: Ctrl/Cmd+S pressed");
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    // Check if window is defined (i.e., we're on the client)
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", handleKeyDown);
 
-    // Clean up the event listener when the component is unmounted
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+      // Clean up the event listener when the component is unmounted
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
   }, []);
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
