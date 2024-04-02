@@ -71,8 +71,8 @@ export const CanvasSettings: React.FC<CanvasSettingsProps> = ({
   //  let [hChannel, sChannel, bChannel] = colorBG.getColorChannels();
 
   useEffect(() => {
-    setWidth(window.innerWidth - 1);
-    setHeight(window.innerHeight - 1);
+    setWidth(window.innerWidth - 172);
+    setHeight(window.innerHeight);
   }, []);
 
   const handleWidthChange = (newWidth: number) => {

@@ -1,5 +1,7 @@
 import { use, useEffect, useRef, useState } from "react";
 
+import ZoomContainer from "./ZoomContainer";
+
 interface DrawingCanvasProps {
   brushColor: string;
   brushWidth: number;
@@ -88,9 +90,13 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const [isSmudging, setIsSmudging] = useState<boolean>(false);
 
   const brushCanvas = document.createElement("canvas");
-  const brushCtx = brushCanvas.getContext("2d")!;
+  const brushCtx = brushCanvas.getContext("2d", {
+    willReadFrequently: true,
+  })!;
 
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [xPosOffset, setXPosOffset] = useState(0);
+  const [yPosOffset, setYPosOffset] = useState(0);
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -218,7 +224,10 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   // Redo the last undone action when shouldRedo is true
   useEffect(() => {
     if (shouldRedo) {
-      const ctx = canvasRef.current!.getContext("2d")!;
+      const ctx = canvasRef.current!.getContext("2d", {
+        willReadFrequently: true,
+      })!;
+
       const lastRedoState = redoStates.current.pop();
       if (lastRedoState) {
         // Push the current state to the undo stack before redoing
@@ -236,6 +245,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   useEffect(() => {
     const ctx = canvasRef.current!.getContext("2d")!;
+
     const lastState = canvasStates.current[canvasStates.current.length - 1];
     if (lastState) {
       // Resize the canvas
@@ -300,7 +310,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     }
 
     // Clamp pressure to a valid range
-    pressure = Math.max(0.0001, Math.min(pressure, 1));
+    pressure = Math.max(0.001, Math.min(pressure, 1));
     const randomSize = Math.random() * jitterSize - jitterSize / 2;
 
     const brushSize = brushWidth * pressure + randomSize;
@@ -308,7 +318,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
     const ctx = canvasRef.current!.getContext("2d")!;
     ctx.lineJoin = ctx.lineCap = "round";
-    ctx.globalAlpha = pressure * brushFlow;
+    ctx.globalAlpha = pressure * 2 * brushFlow;
 
     // Check if erasing mode is on
     if (isErasing) {
@@ -325,29 +335,37 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       const prevPoint = lastPoint!;
       const dist = distanceBetween(prevPoint, currentPoint);
       const angle = angleBetween(prevPoint, currentPoint);
+
       // Set up the feathered brush
       const radius = brushSize / 2;
       brushCanvas.width = brushSize;
       brushCanvas.height = brushSize;
       brushCtx.clearRect(0, 0, brushSize, brushSize);
       brushCtx.globalCompositeOperation = "source-over";
+
       let tempCanvas = document.createElement("canvas");
-      let tempCtx = tempCanvas.getContext("2d");
+      let tempCtx = tempCanvas.getContext("2d", {
+        willReadFrequently: true,
+      });
+
       if (tempCtx !== null && copy !== null) {
         tempCanvas.width = copy.width;
         tempCanvas.height = copy.height;
         tempCtx.putImageData(copy, 0, 0);
-        // Now you can use tempCanvas as a CanvasImageSource in a drawImage call
+        //  tempCtx.globalAlpha = pressure * brushFlow;
         brushCtx.drawImage(tempCanvas, 0, 0);
       }
-      //  brushCtx.drawImage(copy, 0, 0);
 
       // Apply the feathered effect to the brush canvas
+      //brushCtx.globalAlpha = pressure * brushFlow;
       brushCtx.globalCompositeOperation = "destination-in";
       brushCtx.fillStyle = createFeatherGradient(radius, brushSoftness);
       brushCtx.fillRect(0, 0, brushSize, brushSize);
 
-      for (let i = 0; i < dist; i += 1) {
+      // Define the step size for iterating over the distance
+      const stepSize = 3; // Adjust this value as needed
+
+      for (let i = 0; i < dist; i += stepSize) {
         const x = prevPoint.x + Math.sin(angle) * i;
         const y = prevPoint.y + Math.cos(angle) * i;
 
