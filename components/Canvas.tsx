@@ -1,7 +1,5 @@
 import { use, useEffect, useRef, useState } from "react";
 
-import ZoomContainer from "./ZoomContainer";
-
 interface DrawingCanvasProps {
   brushColor: string;
   brushWidth: number;
@@ -427,16 +425,17 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   };
 
   useEffect(() => {
+    const currentCanvasRef = canvasRef.current;
+
     return () => {
-      if (canvasRef.current) {
-        const ctx = canvasRef.current.getContext("2d");
+      if (currentCanvasRef) {
+        const ctx = currentCanvasRef.getContext("2d");
         if (ctx) {
           ctx.globalCompositeOperation = "source-over";
         }
       }
     };
   }, []);
-
   const handlePointerUp = () => {
     setIsDrawing(false);
   };

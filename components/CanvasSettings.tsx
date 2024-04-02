@@ -73,7 +73,7 @@ export const CanvasSettings: React.FC<CanvasSettingsProps> = ({
   useEffect(() => {
     setWidth(window.innerWidth - 172);
     setHeight(window.innerHeight);
-  }, []);
+  }, [setHeight, setWidth]);
 
   const handleWidthChange = (newWidth: number) => {
     setWidth(newWidth);
