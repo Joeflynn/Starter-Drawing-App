@@ -1,3 +1,5 @@
+"use client";
+
 import { use, useEffect, useRef, useState } from "react";
 
 interface DrawingCanvasProps {
