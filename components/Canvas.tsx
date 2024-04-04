@@ -345,6 +345,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       brushCanvas.height = brushSize;
       brushCtx.clearRect(0, 0, brushSize, brushSize);
       brushCtx.globalCompositeOperation = "source-over";
+      //brushCtx.globalAlpha = pressure * 2 * brushFlow;
 
       let tempCanvas = document.createElement("canvas");
       let tempCtx = tempCanvas.getContext("2d", {
@@ -355,7 +356,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
         tempCanvas.width = copy.width;
         tempCanvas.height = copy.height;
         tempCtx.putImageData(copy, 0, 0);
-        //  tempCtx.globalAlpha = pressure * brushFlow;
+        tempCtx.globalAlpha = pressure * brushFlow;
         brushCtx.drawImage(tempCanvas, 0, 0);
       }
 
