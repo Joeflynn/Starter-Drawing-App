@@ -349,17 +349,24 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       brushCtx.globalCompositeOperation = "source-over";
       //brushCtx.globalAlpha = pressure * 2 * brushFlow;
 
-      let tempCanvas = document.createElement("canvas");
-      let tempCtx = tempCanvas.getContext("2d", {
-        willReadFrequently: true,
-      });
+      let tempCanvas;
 
-      if (tempCtx !== null && copy !== null) {
-        tempCanvas.width = copy.width;
-        tempCanvas.height = copy.height;
-        tempCtx.putImageData(copy, 0, 0);
-        tempCtx.globalAlpha = pressure * brushFlow;
-        brushCtx.drawImage(tempCanvas, 0, 0);
+      if (typeof window !== "undefined") {
+        tempCanvas = document.createElement("canvas");
+      }
+
+      if (tempCanvas) {
+        let tempCtx = tempCanvas.getContext("2d", {
+          willReadFrequently: true,
+        });
+
+        if (tempCtx !== null && copy !== null) {
+          tempCanvas.width = copy.width;
+          tempCanvas.height = copy.height;
+          tempCtx.putImageData(copy, 0, 0);
+          tempCtx.globalAlpha = pressure * brushFlow;
+          brushCtx.drawImage(tempCanvas, 0, 0);
+        }
       }
 
       // Apply the feathered effect to the brush canvas
