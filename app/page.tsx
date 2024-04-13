@@ -93,11 +93,11 @@ export default function Home() {
   let [brushSpacing, setBrushSpacing] = React.useState(0.9);
   let [brushBlendMode, setBrushBlendMode] = React.useState("normal");
   let [brushFlowJitter, setBrushFlowJitter] = React.useState(0.0);
-  let [brushSizeJitter, setBrushSizeJitter] = React.useState(0.1);
+  let [brushSizeJitter, setBrushSizeJitter] = React.useState(0.01);
   let [brushRotationJitter, setBrushRotationJitter] = React.useState(0.0);
   let [brushScatter, setBrushScatter] = React.useState(0.0);
-  let [brushTangentJitter, setBrushTangentJitter] = React.useState(0.1);
-  let [brushNormalJitter, setBrushNormalJitter] = React.useState(0.1);
+  let [brushTangentJitter, setBrushTangentJitter] = React.useState(0.01);
+  let [brushNormalJitter, setBrushNormalJitter] = React.useState(0.01);
   let [pressureSize, setPressureSize] = React.useState(true);
   let [pressureOpacity, setPressureOpacity] = React.useState(true);
 
@@ -406,7 +406,7 @@ export default function Home() {
                 <LabeledSlider
                   label="Size jitter"
                   defaultValue={brushSizeJitter}
-                  minValue={0.1}
+                  minValue={0.01}
                   maxValue={1}
                   step={0.01}
                   onChange={setBrushSizeJitter}
@@ -433,7 +433,7 @@ export default function Home() {
                 <LabeledSlider
                   label="Tangent jitter"
                   defaultValue={brushTangentJitter}
-                  minValue={0.1}
+                  minValue={0.01}
                   maxValue={1}
                   step={0.01}
                   onChange={setBrushTangentJitter}
@@ -442,7 +442,7 @@ export default function Home() {
                 <LabeledSlider
                   label="Normal jitter"
                   defaultValue={brushNormalJitter}
-                  minValue={0.1}
+                  minValue={0.01}
                   maxValue={1}
                   step={0.01}
                   onChange={setBrushNormalJitter}
