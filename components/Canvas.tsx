@@ -1,5 +1,7 @@
 "use client";
 
+// reverted app to last deployable version and added smudge brush to canvas
+
 import { use, useEffect, useRef, useState } from "react";
 
 interface DrawingCanvasProps {
