@@ -91,10 +91,23 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const [isErasing, setIsErasing] = useState<boolean>(false);
   const [isSmudging, setIsSmudging] = useState<boolean>(false);
 
-  const brushCanvas = document.createElement("canvas");
-  const brushCtx = brushCanvas.getContext("2d", {
-    willReadFrequently: true,
-  })!;
+  const [brushCanvas, setBrushCanvas] = useState<HTMLCanvasElement | null>(
+    null
+  );
+  const [brushCtx, setBrushCtx] = useState<CanvasRenderingContext2D | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", {
+        willReadFrequently: true,
+      });
+      setBrushCanvas(canvas);
+      setBrushCtx(ctx);
+    }
+  }, []);
 
   const [zoomLevel, setZoomLevel] = useState(1);
   const [xPosOffset, setXPosOffset] = useState(0);
@@ -146,7 +159,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const [smudge, setSmudge] = useState<ImageData | null>(null);
 
   const createFeatherGradient = (radius: number, softness: number) => {
-    const gradient = brushCtx.createRadialGradient(
+    const gradient = brushCtx?.createRadialGradient(
       radius,
       radius,
       radius * softness,
@@ -154,8 +167,13 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       radius,
       radius
     );
-    gradient.addColorStop(0, "rgba(0, 0, 0, 1)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+    if (gradient) {
+      gradient.addColorStop(0, "rgba(0, 0, 0, 1)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+    } else {
+      // add an error message here
+      throw new Error("Failed to create radial gradient");
+    }
     return gradient;
   };
 
@@ -343,10 +361,16 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
       // Set up the feathered brush
       const radius = brushSize / 2;
-      brushCanvas.width = brushSize;
-      brushCanvas.height = brushSize;
-      brushCtx.clearRect(0, 0, brushSize, brushSize);
-      brushCtx.globalCompositeOperation = "source-over";
+      if (brushCanvas) {
+        brushCanvas.width = brushSize;
+        brushCanvas.height = brushSize;
+      }
+
+      brushCtx?.clearRect(0, 0, brushSize, brushSize);
+      if (brushCtx) {
+        // Now it's safe to use brushCtx
+        brushCtx.globalCompositeOperation = "source-over";
+      }
       //brushCtx.globalAlpha = pressure * 2 * brushFlow;
 
       let tempCanvas;
@@ -365,15 +389,17 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
           tempCanvas.height = copy.height;
           tempCtx.putImageData(copy, 0, 0);
           tempCtx.globalAlpha = pressure * brushFlow;
-          brushCtx.drawImage(tempCanvas, 0, 0);
+          brushCtx?.drawImage(tempCanvas, 0, 0);
         }
       }
 
       // Apply the feathered effect to the brush canvas
       //brushCtx.globalAlpha = pressure * brushFlow;
-      brushCtx.globalCompositeOperation = "destination-in";
-      brushCtx.fillStyle = createFeatherGradient(radius, brushSoftness);
-      brushCtx.fillRect(0, 0, brushSize, brushSize);
+      if (brushCtx) {
+        brushCtx.globalCompositeOperation = "destination-in";
+        brushCtx.fillStyle = createFeatherGradient(radius, brushSoftness);
+        brushCtx.fillRect(0, 0, brushSize, brushSize);
+      }
 
       // Define the step size for iterating over the distance
       const stepSize = 3; // Adjust this value as needed
@@ -384,7 +410,9 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
         // Draw the feathered brush at the current position
         ctx.globalCompositeOperation = "source-over";
-        ctx.drawImage(brushCanvas, x - radius, y - radius);
+        if (brushCanvas) {
+          ctx.drawImage(brushCanvas, x - radius, y - radius);
+        }
 
         // Capture a new copy of the canvas at the current position
         const newCopyX = x - radius;
