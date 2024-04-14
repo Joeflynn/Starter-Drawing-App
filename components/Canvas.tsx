@@ -97,8 +97,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   isAltKeyDown,
   isShiftKeyDown,
 }) => {
-  // Shapes
-
+  // Shapes state
   let [shapeStartPos, setShapeStartPos] = React.useState({ x: 0, y: 0 });
   let [shapeEndPos, setShapeEndPos] = React.useState({ x: 0, y: 0 });
   let [shapeCurrentPos, setShapeCurrentPos] = React.useState({ x: 0, y: 0 });
@@ -107,6 +106,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   let [shapeWidth, setShapeWidth] = React.useState(0);
   let [shapeHeight, setShapeHeight] = React.useState(0);
 
+  // Convert hex color to rgba utility function
   const hexToRgba = (hex: string, alpha: number): string => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -114,23 +114,38 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
-  const zoomFactor = 1.1;
-
-  const canvasStates = useRef<Array<ImageData>>([]);
-
+  // Used to set the brush color with opacity and softness
   const brushColor1Rgba = hexToRgba(brushColor, brushOpacity);
   const brushColor2Rgba = hexToRgba(brushColor, brushOpacity / 2);
   const brushColor3Rgba = hexToRgba(brushColor, 0.0);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
-  const [lastPoint, setLastPoint] = useState<{ x: number; y: number } | null>(
-    null
-  );
-
   const [isErasing, setIsErasing] = useState<boolean>(false);
   const [isSmudging, setIsSmudging] = useState<boolean>(false);
   const [isCreatingShape, setCreatingShape] = useState<boolean>(false);
+  const [isPainting, setIsPainting] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsPainting(activeTool === "brush");
+  }, [activeTool]);
+
+  useEffect(() => {
+    setIsErasing(activeTool === "eraser");
+  }, [activeTool]);
+
+  useEffect(() => {
+    setIsSmudging(activeTool === "smudge");
+  }, [activeTool]);
+
+  useEffect(() => {
+    setCreatingShape(activeTool === "shapes");
+  }, [activeTool]);
+
+  // Used to store the canvas state for export, undo, and redo functionality
+  const canvasStates = useRef<Array<ImageData>>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // brushCanvas and brushCtx are used to create the feathered brush tip for the smudge tool
 
   const [brushCanvas, setBrushCanvas] = useState<HTMLCanvasElement | null>(
     null
@@ -150,9 +165,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     }
   }, []);
 
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [xPosOffset, setXPosOffset] = useState(0);
-  const [yPosOffset, setYPosOffset] = useState(0);
+  // CANVAS BACKGROUND COLOR
 
   useEffect(() => {
     if (canvasRef.current) {
@@ -170,67 +183,13 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       const ctx = canvas.getContext("2d");
       if (ctx) {
         const activeShape = new ShapeDraw(ctx);
-
-        // Rectangle
-        activeShape.drawRect(
-          50,
-          50,
-          100,
-          80,
-          shapeFillColor,
-          shapeStrokeColor,
-          shapeStrokeWidth,
-          shapeStrokeAlpha,
-          shapeFillAlpha
-        );
-
         // Star
         activeShape.drawStar(
-          200,
-          100,
+          shapeCurrentPos.x,
+          shapeCurrentPos.y,
           shapePointCount,
           shapeInnerRadius,
           shapeOuterRadius,
-          shapeFillColor,
-          shapeStrokeColor,
-          shapeStrokeWidth,
-          shapeStrokeAlpha,
-          shapeFillAlpha
-        );
-
-        // Rounded Rectangle
-        activeShape.drawRoundedRect(
-          50,
-          200,
-          150,
-          100,
-          shapeCornerRadius,
-          shapeFillColor,
-          shapeStrokeColor,
-          shapeStrokeWidth,
-          shapeStrokeAlpha,
-          shapeFillAlpha
-        );
-
-        // Ellipse
-        activeShape.drawEllipse(
-          250,
-          250,
-          120,
-          80,
-          shapeFillColor,
-          shapeStrokeColor,
-          shapeStrokeWidth,
-          shapeStrokeAlpha,
-          shapeFillAlpha
-        );
-
-        // Regular Polygon
-        activeShape.drawRegularPolygon(
-          400,
-          100,
-          shapeSidesCount,
-          80,
           shapeFillColor,
           shapeStrokeColor,
           shapeStrokeWidth,
@@ -250,27 +209,15 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     shapeOuterRadius,
     shapePointCount,
     shapeSidesCount,
+    shapeType,
+    shapeCurrentPos,
   ]);
 
-  const zoomIn = () => {
-    setZoomLevel((prevZoomLevel) => prevZoomLevel + 0.1);
-  };
+  const [lastPoint, setLastPoint] = useState<{ x: number; y: number } | null>(
+    null
+  );
 
-  const zoomOut = () => {
-    setZoomLevel((prevZoomLevel) => prevZoomLevel - 0.1);
-  };
-
-  useEffect(() => {
-    setIsErasing(activeTool === "eraser");
-  }, [activeTool]);
-
-  useEffect(() => {
-    setIsSmudging(activeTool === "smudge");
-  }, [activeTool]);
-
-  useEffect(() => {
-    setCreatingShape(activeTool === "shapes");
-  }, [activeTool]);
+  // DRAWING UTILITY FUNCTIONS
 
   const distanceBetween = (
     point1: { x: number; y: number },
@@ -287,6 +234,8 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   ) => {
     return Math.atan2(point2.x - point1.x, point2.y - point1.y);
   };
+
+  // LOGIC FOR CREATING THE FEATHERED GRADIENT BRUSH TIP FOR THE SMUDGE TOOL
 
   const createFeatherGradient = (radius: number, softness: number) => {
     const gradient = brushCtx?.createRadialGradient(
@@ -309,30 +258,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   const [copy, setCopy] = useState<ImageData | null>(null);
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    setIsDrawing(true);
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    setLastPoint(currentPoint);
-    const ctx = canvasRef.current!.getContext("2d")!;
-    const copyWidth = brushWidth;
-    const copyHeight = brushWidth;
-    const copyX = currentPoint.x - copyWidth / 2;
-    const copyY = currentPoint.y - copyHeight / 2;
-    const initialCopy = ctx.getImageData(copyX, copyY, copyWidth, copyHeight);
-    setCopy(initialCopy);
-
-    const imageData = ctx.getImageData(
-      0,
-      0,
-      canvasRef.current!.width,
-      canvasRef.current!.height
-    );
-
-    canvasStates.current.push(imageData);
-  };
-  // Export the canvas as a jpg when shouldExport is true
+  // EXPORT IMAGE UNDO REDO START
 
   useEffect(() => {
     if (shouldExport) {
@@ -441,39 +367,63 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     }
   }, []);
 
+  // EXPORT IMAGE UNDO REDO END
+
+  // POINTER DOWN START
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    setIsDrawing(true);
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    setLastPoint(currentPoint);
+    const ctx = canvasRef.current!.getContext("2d")!;
+    const copyWidth = brushWidth;
+    const copyHeight = brushWidth;
+    const copyX = currentPoint.x - copyWidth / 2;
+    const copyY = currentPoint.y - copyHeight / 2;
+    const initialCopy = ctx.getImageData(copyX, copyY, copyWidth, copyHeight);
+    setCopy(initialCopy);
+
+    const imageData = ctx.getImageData(
+      0,
+      0,
+      canvasRef.current!.width,
+      canvasRef.current!.height
+    );
+
+    canvasStates.current.push(imageData);
+  };
+  // POINTER DOWN END
+
+  // POINTER MOVE START
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const spacingRatio = brushSpacing / 10; // Set the spacing between stamps as a ratio of the brush size
-    const jitterTangent = brushTangentJitter * 100; // Set the maximum offset along the direction of the line (tangential)
-    const jitterNormal = brushNormalJitter * 100; // Set the maximum offset perpendicular to the direction of the line (normal)
-    const jitterSize = brushSizeJitter * 100; // Set the maximum variation in the size of the stamp
-    const softness = brushSoftness + 0.001; // Set the softness of the brush
+    const spacingRatio = brushSpacing / 10;
+    const jitterTangent = brushTangentJitter * 100;
+    const jitterNormal = brushNormalJitter * 100;
+    const jitterSize = brushSizeJitter * 100;
 
     if (!isDrawing) return;
-
     const rect = canvasRef.current!.getBoundingClientRect();
     const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     const dist = distanceBetween(lastPoint!, currentPoint);
     const angle = angleBetween(lastPoint!, currentPoint);
     let pressure = e.pressure;
 
-    // Check for invalid pressure values and log detailed information
     if (isNaN(pressure) || pressure < 0 || pressure > 1) {
       console.warn("Invalid pressure value detected:", pressure, "Event:", e);
-      pressure = 0.5; // Fallback value
+      pressure = 0.5;
     }
 
-    // Clamp pressure to a valid range
     pressure = Math.max(0.001, Math.min(pressure, 1));
     const randomSize = Math.random() * jitterSize - jitterSize / 2;
 
     const brushSize = brushWidth * pressure + randomSize;
-    const stampSpacing = brushWidth * spacingRatio; // Calculating the spacing between stamps based on the ratio
+    const stampSpacing = brushWidth * spacingRatio;
 
     const ctx = canvasRef.current!.getContext("2d")!;
     ctx.lineJoin = ctx.lineCap = "round";
     ctx.globalAlpha = pressure * 2 * brushFlow;
 
-    // Check if erasing mode is on
     if (isErasing) {
       ctx.globalCompositeOperation = "destination-out";
       console.log(
@@ -484,12 +434,10 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     }
 
     if (isSmudging) {
-      // Perform the smudge effect
       const prevPoint = lastPoint!;
       const dist = distanceBetween(prevPoint, currentPoint);
       const angle = angleBetween(prevPoint, currentPoint);
 
-      // Set up the feathered brush
       const radius = brushSize / 2;
       if (brushCanvas) {
         brushCanvas.width = brushSize;
@@ -498,10 +446,8 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
       brushCtx?.clearRect(0, 0, brushSize, brushSize);
       if (brushCtx) {
-        // Now it's safe to use brushCtx
         brushCtx.globalCompositeOperation = "source-over";
       }
-      //brushCtx.globalAlpha = pressure * 2 * brushFlow;
 
       let tempCanvas;
 
@@ -523,28 +469,23 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
         }
       }
 
-      // Apply the feathered effect to the brush canvas
-      //brushCtx.globalAlpha = pressure * brushFlow;
       if (brushCtx) {
         brushCtx.globalCompositeOperation = "destination-in";
         brushCtx.fillStyle = createFeatherGradient(radius, brushSoftness);
         brushCtx.fillRect(0, 0, brushSize, brushSize);
       }
 
-      // Define the step size for iterating over the distance
-      const stepSize = 3; // Adjust this value as needed
+      const stepSize = 3;
 
       for (let i = 0; i < dist; i += stepSize) {
         const x = prevPoint.x + Math.sin(angle) * i;
         const y = prevPoint.y + Math.cos(angle) * i;
 
-        // Draw the feathered brush at the current position
         ctx.globalCompositeOperation = "source-over";
         if (brushCanvas) {
           ctx.drawImage(brushCanvas, x - radius, y - radius);
         }
 
-        // Capture a new copy of the canvas at the current position
         const newCopyX = x - radius;
         const newCopyY = y - radius;
         const newCopy = ctx.getImageData(
@@ -596,22 +537,13 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
     setLastPoint(currentPoint);
   };
+  // POINTER MOVE END
 
-  useEffect(() => {
-    const currentCanvasRef = canvasRef.current;
-
-    return () => {
-      if (currentCanvasRef) {
-        const ctx = currentCanvasRef.getContext("2d");
-        if (ctx) {
-          ctx.globalCompositeOperation = "source-over";
-        }
-      }
-    };
-  }, []);
+  // POINTER UP START
   const handlePointerUp = () => {
     setIsDrawing(false);
   };
+  // POINTER UP END
 
   return (
     <canvas
