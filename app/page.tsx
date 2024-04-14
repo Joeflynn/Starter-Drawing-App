@@ -168,7 +168,7 @@ export default function Home() {
     "chamferRectangle",
     "line",
   ];
-  const [shapeType, setShapeType] = useState<string>(shapes[0]);
+  const [shapeType, setShapeType] = useState<string>(shapes[1]);
 
   useEffect(() => {
     if (eyedropperColor) {

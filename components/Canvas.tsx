@@ -100,7 +100,10 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   // Shapes state
   let [shapeStartPos, setShapeStartPos] = React.useState({ x: 0, y: 0 });
   let [shapeEndPos, setShapeEndPos] = React.useState({ x: 0, y: 0 });
-  let [shapeCurrentPos, setShapeCurrentPos] = React.useState({ x: 0, y: 0 });
+  let [shapeCurrentPos, setShapeCurrentPos] = React.useState({
+    x: 250,
+    y: 250,
+  });
   let [shapePoints, setShapePoints] = React.useState([]);
   let [shapePivotPos, setShapePivotPos] = React.useState({ x: 0, y: 0 });
   let [shapeWidth, setShapeWidth] = React.useState(0);
@@ -371,177 +374,197 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   // POINTER DOWN START
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    setIsDrawing(true);
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    setLastPoint(currentPoint);
-    const ctx = canvasRef.current!.getContext("2d")!;
-    const copyWidth = brushWidth;
-    const copyHeight = brushWidth;
-    const copyX = currentPoint.x - copyWidth / 2;
-    const copyY = currentPoint.y - copyHeight / 2;
-    const initialCopy = ctx.getImageData(copyX, copyY, copyWidth, copyHeight);
-    setCopy(initialCopy);
+    if (isCreatingShape) {
+      //shape drawing logic
+    } else {
+      e.preventDefault();
+      setIsDrawing(true);
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const currentPoint = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      setLastPoint(currentPoint);
+      // Smudge brush
+      const ctx = canvasRef.current!.getContext("2d")!;
+      const copyWidth = brushWidth;
+      const copyHeight = brushWidth;
+      const copyX = currentPoint.x - copyWidth / 2;
+      const copyY = currentPoint.y - copyHeight / 2;
+      const initialCopy = ctx.getImageData(copyX, copyY, copyWidth, copyHeight);
+      setCopy(initialCopy);
 
-    const imageData = ctx.getImageData(
-      0,
-      0,
-      canvasRef.current!.width,
-      canvasRef.current!.height
-    );
+      const imageData = ctx.getImageData(
+        0,
+        0,
+        canvasRef.current!.width,
+        canvasRef.current!.height
+      );
 
-    canvasStates.current.push(imageData);
+      canvasStates.current.push(imageData);
+    }
   };
   // POINTER DOWN END
 
   // POINTER MOVE START
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const spacingRatio = brushSpacing / 10;
-    const jitterTangent = brushTangentJitter * 100;
-    const jitterNormal = brushNormalJitter * 100;
-    const jitterSize = brushSizeJitter * 100;
-
-    if (!isDrawing) return;
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const currentPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    const dist = distanceBetween(lastPoint!, currentPoint);
-    const angle = angleBetween(lastPoint!, currentPoint);
-    let pressure = e.pressure;
-
-    if (isNaN(pressure) || pressure < 0 || pressure > 1) {
-      console.warn("Invalid pressure value detected:", pressure, "Event:", e);
-      pressure = 0.5;
-    }
-
-    pressure = Math.max(0.001, Math.min(pressure, 1));
-    const randomSize = Math.random() * jitterSize - jitterSize / 2;
-
-    const brushSize = brushWidth * pressure + randomSize;
-    const stampSpacing = brushWidth * spacingRatio;
-
-    const ctx = canvasRef.current!.getContext("2d")!;
-    ctx.lineJoin = ctx.lineCap = "round";
-    ctx.globalAlpha = pressure * 2 * brushFlow;
-
-    if (isErasing) {
-      ctx.globalCompositeOperation = "destination-out";
-      console.log(
-        "DrawingCanvas.tsx: handlePointerMove: isErasing: " + isErasing
-      );
+    if (isCreatingShape) {
+      //shape drawing logic
     } else {
-      ctx.globalCompositeOperation = "source-over";
-    }
+      const spacingRatio = brushSpacing / 10;
+      const jitterTangent = brushTangentJitter * 100;
+      const jitterNormal = brushNormalJitter * 100;
+      const jitterSize = brushSizeJitter * 100;
 
-    if (isSmudging) {
-      const prevPoint = lastPoint!;
-      const dist = distanceBetween(prevPoint, currentPoint);
-      const angle = angleBetween(prevPoint, currentPoint);
+      if (!isDrawing) return;
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const currentPoint = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+      const dist = distanceBetween(lastPoint!, currentPoint);
+      const angle = angleBetween(lastPoint!, currentPoint);
+      let pressure = e.pressure;
 
-      const radius = brushSize / 2;
-      if (brushCanvas) {
-        brushCanvas.width = brushSize;
-        brushCanvas.height = brushSize;
+      if (isNaN(pressure) || pressure < 0 || pressure > 1) {
+        console.warn("Invalid pressure value detected:", pressure, "Event:", e);
+        pressure = 0.5;
       }
 
-      brushCtx?.clearRect(0, 0, brushSize, brushSize);
-      if (brushCtx) {
-        brushCtx.globalCompositeOperation = "source-over";
-      }
+      pressure = Math.max(0.001, Math.min(pressure, 1));
+      const randomSize = Math.random() * jitterSize - jitterSize / 2;
 
-      let tempCanvas;
+      const brushSize = brushWidth * pressure + randomSize;
+      const stampSpacing = brushWidth * spacingRatio;
 
-      if (typeof window !== "undefined") {
-        tempCanvas = document.createElement("canvas");
-      }
+      const ctx = canvasRef.current!.getContext("2d")!;
+      ctx.lineJoin = ctx.lineCap = "round";
+      ctx.globalAlpha = pressure * 2 * brushFlow;
 
-      if (tempCanvas) {
-        let tempCtx = tempCanvas.getContext("2d", {
-          willReadFrequently: true,
-        });
-
-        if (tempCtx !== null && copy !== null) {
-          tempCanvas.width = copy.width;
-          tempCanvas.height = copy.height;
-          tempCtx.putImageData(copy, 0, 0);
-          tempCtx.globalAlpha = pressure * brushFlow;
-          brushCtx?.drawImage(tempCanvas, 0, 0);
-        }
-      }
-
-      if (brushCtx) {
-        brushCtx.globalCompositeOperation = "destination-in";
-        brushCtx.fillStyle = createFeatherGradient(radius, brushSoftness);
-        brushCtx.fillRect(0, 0, brushSize, brushSize);
-      }
-
-      const stepSize = 3;
-
-      for (let i = 0; i < dist; i += stepSize) {
-        const x = prevPoint.x + Math.sin(angle) * i;
-        const y = prevPoint.y + Math.cos(angle) * i;
-
+      if (isErasing) {
+        ctx.globalCompositeOperation = "destination-out";
+        console.log(
+          "DrawingCanvas.tsx: handlePointerMove: isErasing: " + isErasing
+        );
+      } else {
         ctx.globalCompositeOperation = "source-over";
+      }
+
+      if (isSmudging) {
+        const prevPoint = lastPoint!;
+        const dist = distanceBetween(prevPoint, currentPoint);
+        const angle = angleBetween(prevPoint, currentPoint);
+
+        const radius = brushSize / 2;
         if (brushCanvas) {
-          ctx.drawImage(brushCanvas, x - radius, y - radius);
+          brushCanvas.width = brushSize;
+          brushCanvas.height = brushSize;
         }
 
-        const newCopyX = x - radius;
-        const newCopyY = y - radius;
-        const newCopy = ctx.getImageData(
-          newCopyX,
-          newCopyY,
-          brushSize,
-          brushSize
-        );
-        setCopy(newCopy);
+        brushCtx?.clearRect(0, 0, brushSize, brushSize);
+        if (brushCtx) {
+          brushCtx.globalCompositeOperation = "source-over";
+        }
+
+        let tempCanvas;
+
+        if (typeof window !== "undefined") {
+          tempCanvas = document.createElement("canvas");
+        }
+
+        if (tempCanvas) {
+          let tempCtx = tempCanvas.getContext("2d", {
+            willReadFrequently: true,
+          });
+
+          if (tempCtx !== null && copy !== null) {
+            tempCanvas.width = copy.width;
+            tempCanvas.height = copy.height;
+            tempCtx.putImageData(copy, 0, 0);
+            tempCtx.globalAlpha = pressure * brushFlow;
+            brushCtx?.drawImage(tempCanvas, 0, 0);
+          }
+        }
+
+        if (brushCtx) {
+          brushCtx.globalCompositeOperation = "destination-in";
+          brushCtx.fillStyle = createFeatherGradient(radius, brushSoftness);
+          brushCtx.fillRect(0, 0, brushSize, brushSize);
+        }
+
+        const stepSize = 3;
+
+        for (let i = 0; i < dist; i += stepSize) {
+          const x = prevPoint.x + Math.sin(angle) * i;
+          const y = prevPoint.y + Math.cos(angle) * i;
+
+          ctx.globalCompositeOperation = "source-over";
+          if (brushCanvas) {
+            ctx.drawImage(brushCanvas, x - radius, y - radius);
+          }
+
+          const newCopyX = x - radius;
+          const newCopyY = y - radius;
+          const newCopy = ctx.getImageData(
+            newCopyX,
+            newCopyY,
+            brushSize,
+            brushSize
+          );
+          setCopy(newCopy);
+        }
+      } else {
+        for (let i = 0; i < dist; i += stampSpacing) {
+          const randomTangent =
+            Math.random() * jitterTangent - jitterTangent / 2;
+          const randomNormal = Math.random() * jitterNormal - jitterNormal / 2;
+
+          const x =
+            lastPoint!.x +
+            Math.sin(angle) * i +
+            Math.sin(angle) * randomTangent -
+            Math.cos(angle) * randomNormal;
+          const y =
+            lastPoint!.y +
+            Math.cos(angle) * i +
+            Math.cos(angle) * randomTangent +
+            Math.sin(angle) * randomNormal;
+
+          const radgrad = ctx.createRadialGradient(
+            x,
+            y,
+            brushSize / 4,
+            x,
+            y,
+            brushSize / 2
+          );
+
+          radgrad.addColorStop(0, brushColor1Rgba);
+          radgrad.addColorStop(brushSoftness, brushColor2Rgba);
+          radgrad.addColorStop(1, brushColor3Rgba);
+
+          ctx.fillStyle = radgrad;
+          ctx.fillRect(
+            x - brushSize / 2,
+            y - brushSize / 2,
+            brushSize,
+            brushSize
+          );
+        }
       }
-    } else {
-      for (let i = 0; i < dist; i += stampSpacing) {
-        const randomTangent = Math.random() * jitterTangent - jitterTangent / 2;
-        const randomNormal = Math.random() * jitterNormal - jitterNormal / 2;
 
-        const x =
-          lastPoint!.x +
-          Math.sin(angle) * i +
-          Math.sin(angle) * randomTangent -
-          Math.cos(angle) * randomNormal;
-        const y =
-          lastPoint!.y +
-          Math.cos(angle) * i +
-          Math.cos(angle) * randomTangent +
-          Math.sin(angle) * randomNormal;
-
-        const radgrad = ctx.createRadialGradient(
-          x,
-          y,
-          brushSize / 4,
-          x,
-          y,
-          brushSize / 2
-        );
-
-        radgrad.addColorStop(0, brushColor1Rgba);
-        radgrad.addColorStop(brushSoftness, brushColor2Rgba);
-        radgrad.addColorStop(1, brushColor3Rgba);
-
-        ctx.fillStyle = radgrad;
-        ctx.fillRect(
-          x - brushSize / 2,
-          y - brushSize / 2,
-          brushSize,
-          brushSize
-        );
-      }
+      setLastPoint(currentPoint);
     }
-
-    setLastPoint(currentPoint);
   };
   // POINTER MOVE END
 
   // POINTER UP START
   const handlePointerUp = () => {
-    setIsDrawing(false);
+    if (isCreatingShape) {
+      //shape drawing logic
+    } else {
+      setIsDrawing(false);
+    }
   };
   // POINTER UP END
 
