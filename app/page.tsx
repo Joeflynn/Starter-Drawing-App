@@ -81,12 +81,13 @@ import BrushControlsFlyout from "@/components/BrushControlsFlyout";
 import dynamic from "next/dynamic";
 
 import { CanvasSettings } from "@/components/CanvasSettings";
+import { ShapeButton } from "@/components/ShapeButton";
 
 // Then you can use <ClientSideComponent /> in your main component
 
 export default function Home() {
   const [brushFlow, setBrushFlow] = useState(0.25);
-  let [brushSize, setBrushSize] = React.useState(100);
+  let [brushSize, setBrushSize] = React.useState(200);
   let [brushSoftness, setBrushSoftness] = React.useState(0.5);
   let [brushOpacity, setBrushOpacity] = React.useState(1.0);
   let [brushRotation, setBrushRotation] = React.useState(0.0);
@@ -134,6 +135,40 @@ export default function Home() {
   const [activeTool, setActiveTool] = useState<string>(tools[0]);
 
   const [showBrushControls, setShowBrushControls] = useState(false);
+
+  const [isAltKeyDown, setAltKeyDown] = useState<boolean>(false);
+  const [isShiftKeyDown, setShiftKeyDown] = useState<boolean>(false);
+
+  let [shapeStrokeColor, setShapeStrokeColor] = React.useState("0x000000");
+  let [shapeStrokeWidth, setShapeStrokeWidth] = React.useState(5);
+  let [shapeStrokeAlpha, setShapeStrokeAlpha] = React.useState(1);
+  let [shapeFillColor, setShapeFillColor] = React.useState("0xfff000");
+  let [shapeFillAlpha, setShapeFillAlpha] = React.useState(1);
+  let [shapeCornerRadius, setShapeCornerRadius] = React.useState(12);
+  let [shapeInnerRadius, setShapeInnerRadius] = React.useState(24);
+  let [shapeOuterRadius, setShapeOuterRadius] = React.useState(48);
+  let [shapePointCount, setShapePointCount] = React.useState(7);
+  let [shapeSidesCount, setShapeSidesCount] = React.useState(5);
+  let [shapeHoleInnerRadius, setShapeHoleInnerRadius] = React.useState(64);
+  let [shapeHoleOuterRadius, setShapeHoleOuterRadius] = React.useState(48);
+
+  const shapes = [
+    "customPolygon",
+    "lasso",
+    "polygon",
+    "rectangle",
+    "roundedRectangle",
+    "elipse",
+    "star",
+    "burst",
+    "gear",
+    "arc",
+    "torus",
+    "filletRectangle",
+    "chamferRectangle",
+    "line",
+  ];
+  const [shapeType, setShapeType] = useState<string>(shapes[0]);
 
   useEffect(() => {
     if (eyedropperColor) {
@@ -347,6 +382,16 @@ export default function Home() {
         <MainAreaWrapper>
           <BrushControl>
             <div className="mx-auto flex h-full flex-col content-center space-y-5 py-2">
+              <div className=" hidden ">
+                {shapes.map((shapes) => (
+                  <ShapeButton
+                    key={shapes}
+                    shapes={shapes}
+                    isActive={shapes === shapeType}
+                    onClick={() => setShapeType(shapes)}
+                  />
+                ))}
+              </div>
               <InkStroke24Filled className="h-4 w-4" />
               <BrushSlider
                 orientation="vertical"
@@ -608,6 +653,21 @@ export default function Home() {
           onZoomInDone={() => setShouldZoomIn(false)}
           shouldZoomOut={shouldZoomOut}
           onZoomOutDone={() => setShouldZoomOut(false)}
+          shapeStrokeColor={shapeStrokeColor}
+          shapeStrokeWidth={shapeStrokeWidth}
+          shapeStrokeAlpha={shapeStrokeAlpha}
+          shapeFillColor={shapeFillColor}
+          shapeFillAlpha={shapeFillAlpha}
+          shapeCornerRadius={shapeCornerRadius}
+          shapeInnerRadius={shapeInnerRadius}
+          shapeOuterRadius={shapeOuterRadius}
+          shapePointCount={shapePointCount}
+          shapeSidesCount={shapeSidesCount}
+          shapeHoleInnerRadius={shapeHoleInnerRadius}
+          shapeHoleOuterRadius={shapeHoleOuterRadius}
+          shapeType={shapeType}
+          isAltKeyDown={isAltKeyDown}
+          isShiftKeyDown={isShiftKeyDown}
         />
       </CanvasWrapper>
     </main>

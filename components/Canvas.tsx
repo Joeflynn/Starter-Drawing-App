@@ -1,8 +1,8 @@
 "use client";
 
-// reverted app to last deployable version and added smudge brush to canvas
-
-import { use, useEffect, useRef, useState } from "react";
+import React from "react";
+import { useEffect, useRef, useState } from "react";
+import { ShapeDraw } from "@/lib/ShapeDraw";
 
 interface DrawingCanvasProps {
   brushColor: string;
@@ -34,6 +34,21 @@ interface DrawingCanvasProps {
   onZoomInDone: () => void;
   shouldZoomOut: boolean;
   onZoomOutDone: () => void;
+  shapeStrokeColor: string;
+  shapeFillColor: string;
+  shapeFillAlpha: number;
+  shapeStrokeWidth: number;
+  shapeStrokeAlpha: number;
+  shapeType: string;
+  shapeCornerRadius: number;
+  shapeSidesCount: number;
+  shapePointCount: number;
+  shapeInnerRadius: number;
+  shapeOuterRadius: number;
+  shapeHoleInnerRadius: number;
+  shapeHoleOuterRadius: number;
+  isAltKeyDown: boolean;
+  isShiftKeyDown: boolean;
 }
 
 export const Canvas: React.FC<DrawingCanvasProps> = ({
@@ -66,7 +81,32 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   onZoomInDone,
   shouldZoomOut,
   onZoomOutDone,
+  shapeStrokeColor,
+  shapeFillColor,
+  shapeFillAlpha,
+  shapeStrokeWidth,
+  shapeStrokeAlpha,
+  shapeType,
+  shapeCornerRadius,
+  shapeSidesCount,
+  shapePointCount,
+  shapeInnerRadius,
+  shapeOuterRadius,
+  shapeHoleInnerRadius,
+  shapeHoleOuterRadius,
+  isAltKeyDown,
+  isShiftKeyDown,
 }) => {
+  // Shapes
+
+  let [shapeStartPos, setShapeStartPos] = React.useState({ x: 0, y: 0 });
+  let [shapeEndPos, setShapeEndPos] = React.useState({ x: 0, y: 0 });
+  let [shapeCurrentPos, setShapeCurrentPos] = React.useState({ x: 0, y: 0 });
+  let [shapePoints, setShapePoints] = React.useState([]);
+  let [shapePivotPos, setShapePivotPos] = React.useState({ x: 0, y: 0 });
+  let [shapeWidth, setShapeWidth] = React.useState(0);
+  let [shapeHeight, setShapeHeight] = React.useState(0);
+
   const hexToRgba = (hex: string, alpha: number): string => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -90,6 +130,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   const [isErasing, setIsErasing] = useState<boolean>(false);
   const [isSmudging, setIsSmudging] = useState<boolean>(false);
+  const [isCreatingShape, setCreatingShape] = useState<boolean>(false);
 
   const [brushCanvas, setBrushCanvas] = useState<HTMLCanvasElement | null>(
     null
@@ -120,9 +161,96 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       })!;
       ctx.fillStyle = canvasColor;
       ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      ctx.scale(zoomLevel, zoomLevel);
     }
-  }, [canvasColor, canvasHeight, canvasWidth, zoomLevel]);
+  }, [canvasColor, canvasHeight, canvasWidth]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const activeShape = new ShapeDraw(ctx);
+
+        // Rectangle
+        activeShape.drawRect(
+          50,
+          50,
+          100,
+          80,
+          shapeFillColor,
+          shapeStrokeColor,
+          shapeStrokeWidth,
+          shapeStrokeAlpha,
+          shapeFillAlpha
+        );
+
+        // Star
+        activeShape.drawStar(
+          200,
+          100,
+          shapePointCount,
+          shapeInnerRadius,
+          shapeOuterRadius,
+          shapeFillColor,
+          shapeStrokeColor,
+          shapeStrokeWidth,
+          shapeStrokeAlpha,
+          shapeFillAlpha
+        );
+
+        // Rounded Rectangle
+        activeShape.drawRoundedRect(
+          50,
+          200,
+          150,
+          100,
+          shapeCornerRadius,
+          shapeFillColor,
+          shapeStrokeColor,
+          shapeStrokeWidth,
+          shapeStrokeAlpha,
+          shapeFillAlpha
+        );
+
+        // Ellipse
+        activeShape.drawEllipse(
+          250,
+          250,
+          120,
+          80,
+          shapeFillColor,
+          shapeStrokeColor,
+          shapeStrokeWidth,
+          shapeStrokeAlpha,
+          shapeFillAlpha
+        );
+
+        // Regular Polygon
+        activeShape.drawRegularPolygon(
+          400,
+          100,
+          shapeSidesCount,
+          80,
+          shapeFillColor,
+          shapeStrokeColor,
+          shapeStrokeWidth,
+          shapeStrokeAlpha,
+          shapeFillAlpha
+        );
+      }
+    }
+  }, [
+    shapeFillColor,
+    shapeStrokeColor,
+    shapeStrokeWidth,
+    shapeStrokeAlpha,
+    shapeFillAlpha,
+    shapeCornerRadius,
+    shapeInnerRadius,
+    shapeOuterRadius,
+    shapePointCount,
+    shapeSidesCount,
+  ]);
 
   const zoomIn = () => {
     setZoomLevel((prevZoomLevel) => prevZoomLevel + 0.1);
@@ -140,6 +268,10 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     setIsSmudging(activeTool === "smudge");
   }, [activeTool]);
 
+  useEffect(() => {
+    setCreatingShape(activeTool === "shapes");
+  }, [activeTool]);
+
   const distanceBetween = (
     point1: { x: number; y: number },
     point2: { x: number; y: number }
@@ -155,8 +287,6 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   ) => {
     return Math.atan2(point2.x - point1.x, point2.y - point1.y);
   };
-
-  const [smudge, setSmudge] = useState<ImageData | null>(null);
 
   const createFeatherGradient = (radius: number, softness: number) => {
     const gradient = brushCtx?.createRadialGradient(
