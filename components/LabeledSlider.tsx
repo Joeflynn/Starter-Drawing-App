@@ -28,7 +28,7 @@ function LabledSlider<T extends number | number[]>({
   ...props
 }: LabeledSliderProps<T>) {
   return (
-    <Slider {...props} className="w-72 ">
+    <Slider {...props} className="w-full ">
       <div className="flex sm:text-sm">
         <Label className="flex-1">{label}</Label>
         <SliderOutput />

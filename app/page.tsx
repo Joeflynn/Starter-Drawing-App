@@ -35,6 +35,8 @@ import {
   ClipboardPaste24Regular,
   Cut16Filled,
   Copy16Regular,
+  Toolbox20Regular,
+  WrenchScrewdriver20Regular,
 } from "@fluentui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -77,6 +79,8 @@ import UndoRedoWrapper from "@/components/UndoRedoWrapper";
 import MainAreaWrapper from "@/components/MainAreaWrapper";
 import DropdownAppMenu from "@/components/DropdownAppMenu";
 import BrushControlsFlyout from "@/components/BrushControlsFlyout";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import dynamic from "next/dynamic";
 
@@ -131,7 +135,15 @@ export default function Home() {
     }
   };
 
-  const tools = ["brush", "eraser", "smudge", "select", "shapes"];
+  const tools = [
+    "brush",
+    "eraser",
+    "smudge",
+    "select",
+    "shapes",
+    "fill",
+    "freehand",
+  ];
   const [activeTool, setActiveTool] = useState<string>(tools[0]);
 
   const [showBrushControls, setShowBrushControls] = useState(false);
@@ -170,6 +182,115 @@ export default function Home() {
   ];
   const [shapeType, setShapeType] = useState<string>(shapes[1]);
 
+  const renderActiveToolOptions = () => {
+    switch (activeTool) {
+      case "brush":
+        return (
+          <div>
+            <p> Brush </p>
+          </div>
+        );
+      case "eraser":
+        return (
+          <div>
+            <p> Eraser </p>
+          </div>
+        );
+      case "smudge":
+        return (
+          <div>
+            <p> Smudge </p>
+          </div>
+        );
+      case "select":
+        return (
+          <div>
+            <p> Select </p>
+          </div>
+        );
+      case "shapes":
+        return (
+          <div className="grid w-full gap-2">
+            <h4 className="font-medium leading-none">Shape Options</h4>
+            <LabeledSlider
+              label="Stroke width"
+              defaultValue={2}
+              minValue={0}
+              maxValue={10}
+              step={1}
+            />
+            <Label htmlFor="email">Stroke width</Label>
+            <Input
+              value={1}
+              className="w-32"
+              type="number"
+              id="Height"
+              placeholder="5"
+            />
+            <Label htmlFor="email">Points</Label>
+            <Input
+              value={1}
+              className="w-32"
+              type="number"
+              id="Height"
+              placeholder="5"
+            />
+            <Label htmlFor="email">Sides</Label>
+            <Input
+              value={5}
+              className="w-32"
+              type="number"
+              id="Height"
+              placeholder="5"
+            />
+            <Label htmlFor="email">Radius</Label>
+            <Input
+              value={40}
+              className="w-32"
+              type="number"
+              id="Height"
+              placeholder="5"
+            />
+            <Label htmlFor="email">Inner radius</Label>
+            <Input
+              value={1}
+              className="w-32"
+              type="number"
+              id="Height"
+              placeholder="5"
+            />
+          </div>
+        );
+      case "fill":
+        return (
+          <div className="grid w-full max-w-sm items-center gap-2">
+            <Label htmlFor="email">Fill tolerance</Label>
+            <Input
+              value={10}
+              className="w-32"
+              type="number"
+              id="Height"
+              placeholder="5"
+            />
+          </div>
+        );
+      case "freehand":
+        return (
+          <div className="grid w-full max-w-sm items-center gap-2">
+            <LabeledSlider
+              label="Smoothing"
+              defaultValue={2}
+              minValue={0}
+              maxValue={10}
+              step={1}
+            />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   useEffect(() => {
     if (eyedropperColor) {
       const hsv = hexToHsv(eyedropperColor);
@@ -179,6 +300,7 @@ export default function Home() {
     }
   }, [eyedropperColor]);
   const [showColorSelector, setShowColorSelector] = useState(false);
+  const [showToolOptions, setShowToolOptions] = useState(false);
 
   const [shouldExport, setShouldExport] = useState(false);
 
@@ -296,6 +418,18 @@ export default function Home() {
               ))}
             </div>
           </Card>
+          {showToolOptions && (
+            <div className="absolute top-0 right-0 pt-2 mr-16 pointer-events-none">
+              <Card className="p-2 w-[312px] h-fit pointer-events-auto	">
+                {" "}
+                <div className=" flex h-fit w-full  flex-col items-center justify-center rounded-lg p-1">
+                  <div className="grid gap-4 w-full">
+                    <div className="space-y-2">{renderActiveToolOptions()}</div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
           <Toggle
             className="p-0 pointer-events-auto"
             onClick={() => setShowColorSelector(!showColorSelector)}
@@ -313,8 +447,18 @@ export default function Home() {
               </div>
             </div>
           </Toggle>
+
           {showColorSelector && (
             <ColorSelectorWrapper>
+              <div className=" w-full flex justify-between content-center h-6 py-0">
+                <h4 className="font-medium leading-none">Color</h4>
+                <div
+                  className="h-6 w-8 rounded-md border border-border "
+                  style={{
+                    backgroundColor: color.toString("css"),
+                  }}
+                ></div>
+              </div>
               <div className="h-[0px]  w-[248px] inset-0 z-10">
                 <div className="relative h-[248px] w-[248px] p-0">
                   <ColorWheel value={color} onChange={setColor} />
@@ -423,7 +567,7 @@ export default function Home() {
               <BrushControlsFlyout>
                 <h3 className="font-semibold leading-none">Brush Settings</h3>
                 <LabeledSlider
-                  label="Softness"
+                  label="Hardness"
                   defaultValue={brushSoftness}
                   minValue={0.01}
                   maxValue={1}
@@ -440,7 +584,7 @@ export default function Home() {
                 />
                 <LabeledSlider label="Rotation" />
                 <LabeledSlider
-                  label="flow jitter"
+                  label="Flow jitter"
                   defaultValue={brushFlowJitter}
                   minValue={0}
                   maxValue={1}
@@ -558,6 +702,12 @@ export default function Home() {
               linked={linked}
               setLinked={setLinked}
             />
+            <Toggle
+              className=" size-10 p-1 pointer-events-auto"
+              onClick={() => setShowToolOptions(!showToolOptions)}
+            >
+              <WrenchScrewdriver20Regular className="h-5 w-5" />
+            </Toggle>
           </div>
         </MainAreaWrapper>
         <BottomBarWrapper>

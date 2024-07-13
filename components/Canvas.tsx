@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { use } from "react";
 import { useEffect, useRef, useState } from "react";
 import { ShapeDraw } from "@/lib/ShapeDraw";
 
@@ -121,12 +121,15 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const brushColor1Rgba = hexToRgba(brushColor, brushOpacity);
   const brushColor2Rgba = hexToRgba(brushColor, brushOpacity / 2);
   const brushColor3Rgba = hexToRgba(brushColor, 0.0);
+  const freehandColor = hexToRgba(brushColor, 1);
 
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [isErasing, setIsErasing] = useState<boolean>(false);
   const [isSmudging, setIsSmudging] = useState<boolean>(false);
   const [isCreatingShape, setCreatingShape] = useState<boolean>(false);
   const [isPainting, setIsPainting] = useState<boolean>(false);
+  const [isFilling, setIsFilling] = useState<boolean>(false);
+  const [isFreehand, setIsFreehand] = useState<boolean>(false);
 
   useEffect(() => {
     setIsPainting(activeTool === "brush");
@@ -144,9 +147,28 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     setCreatingShape(activeTool === "shapes");
   }, [activeTool]);
 
+  useEffect(() => {
+    setIsFilling(activeTool === "fill");
+  }, [activeTool]);
+
+  useEffect(() => {
+    setIsFreehand(activeTool === "freehand");
+  }, [activeTool]);
+
   // Used to store the canvas state for export, undo, and redo functionality
   const canvasStates = useRef<Array<ImageData>>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  //quick shape tool test
+  //const [isCreatingShape, setIsCreatingShape] = useState(false);
+  const [shapeStartPoint, setShapeStartPoint] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [shapeEndPoint, setShapeEndPoint] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   // brushCanvas and brushCtx are used to create the feathered brush tip for the smudge tool
 
@@ -180,6 +202,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     }
   }, [canvasColor, canvasHeight, canvasWidth]);
 
+  // Test star shape
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -237,6 +260,11 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   ) => {
     return Math.atan2(point2.x - point1.x, point2.y - point1.y);
   };
+  //Lasso variables
+  const [isLassoActive, setIsLassoActive] = useState(false);
+  const [lassoPoints, setLassoPoints] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
 
   // LOGIC FOR CREATING THE FEATHERED GRADIENT BRUSH TIP FOR THE SMUDGE TOOL
 
@@ -372,10 +400,153 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   // EXPORT IMAGE UNDO REDO END
 
+  function floodFill(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    fillColor: string,
+    tolerance: number = 0
+  ) {
+    const imageData = ctx.getImageData(
+      0,
+      0,
+      ctx.canvas.width,
+      ctx.canvas.height
+    );
+    const targetColor = getPixelColor(imageData, x, y);
+    const fillColorRGBA = hexToRGBA(fillColor);
+
+    if (colorsMatch(targetColor, fillColorRGBA, tolerance)) {
+      return; // Target color is same as fill color, no need to fill
+    }
+
+    const pixelsToCheck = [{ x, y }];
+    const width = imageData.width;
+    const height = imageData.height;
+
+    while (pixelsToCheck.length > 0) {
+      const { x, y } = pixelsToCheck.pop()!;
+
+      if (x < 0 || x >= width || y < 0 || y >= height) {
+        continue;
+      }
+
+      if (colorsMatch(getPixelColor(imageData, x, y), targetColor, tolerance)) {
+        setPixelColor(imageData, x, y, fillColorRGBA);
+        pixelsToCheck.push(
+          { x: x + 1, y },
+          { x: x - 1, y },
+          { x, y: y + 1 },
+          { x, y: y - 1 }
+        );
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  function getPixelColor(imageData: ImageData, x: number, y: number): number[] {
+    const index = (y * imageData.width + x) * 4;
+    return [
+      imageData.data[index],
+      imageData.data[index + 1],
+      imageData.data[index + 2],
+      imageData.data[index + 3],
+    ];
+  }
+
+  function setPixelColor(
+    imageData: ImageData,
+    x: number,
+    y: number,
+    color: number[]
+  ) {
+    const index = (y * imageData.width + x) * 4;
+    imageData.data[index] = color[0];
+    imageData.data[index + 1] = color[1];
+    imageData.data[index + 2] = color[2];
+    imageData.data[index + 3] = color[3];
+  }
+
+  function colorsMatch(
+    color1: number[],
+    color2: number[],
+    tolerance: number
+  ): boolean {
+    return (
+      Math.abs(color1[0] - color2[0]) <= tolerance &&
+      Math.abs(color1[1] - color2[1]) <= tolerance &&
+      Math.abs(color1[2] - color2[2]) <= tolerance &&
+      Math.abs(color1[3] - color2[3]) <= tolerance
+    );
+  }
+
+  const drawRectangle = () => {
+    if (!shapeStartPoint || !shapeEndPoint) return;
+
+    const ctx = canvasRef.current!.getContext("2d")!;
+
+    // Save the current canvas state
+    ctx.save();
+
+    // Use composite operation to draw the rectangle without affecting existing content
+    ctx.globalCompositeOperation = "source-over";
+
+    // Draw the new rectangle
+    ctx.beginPath();
+    ctx.rect(
+      shapeStartPoint.x,
+      shapeStartPoint.y,
+      shapeEndPoint.x - shapeStartPoint.x,
+      shapeEndPoint.y - shapeStartPoint.y
+    );
+    ctx.strokeStyle = shapeStrokeColor; // Use your current brush color
+    ctx.lineWidth = shapeStrokeWidth; // Use your current brush width
+    ctx.fillStyle = shapeFillColor; // Use your current fill color
+    ctx.globalAlpha = shapeFillAlpha; // Use your current fill alpha
+    ctx.fill();
+
+    // Use a composite operation to only draw new pixels
+    // ctx.globalCompositeOperation = "lighter";
+    ctx.stroke();
+
+    // Restore the canvas state
+    ctx.restore();
+  };
+
+  function hexToRGBA(hex: string): number[] {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return [r, g, b, 255];
+  }
+
   // POINTER DOWN START
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (isCreatingShape) {
-      //shape drawing logic
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    if (isFilling) {
+      //Paintbucket tool logic
+      const ctx = canvasRef.current!.getContext("2d")!;
+      const imageData = ctx.getImageData(
+        0,
+        0,
+        canvasRef.current!.width,
+        canvasRef.current!.height
+      );
+      canvasStates.current.push(imageData);
+
+      floodFill(ctx, Math.floor(x), Math.floor(y), brushColor, 10); // Adjust tolerance as needed
+    } else if (isCreatingShape) {
+      setShapeStartPoint({ x, y });
+      setShapeEndPoint({ x, y });
+      const shapeDraw = canvasRef.current!.getContext("2d")!;
+      shapeDraw.save();
+    } else if (isFreehand) {
+      e.preventDefault();
+      setIsLassoActive(true);
+      setLassoPoints([{ x, y }]);
     } else {
       e.preventDefault();
       setIsDrawing(true);
@@ -408,8 +579,31 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   // POINTER MOVE START
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (isCreatingShape) {
-      //shape drawing logic
+    if (isCreatingShape && shapeStartPoint) {
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setShapeEndPoint({ x, y });
+
+      // Redraw the canvas with the updated rectangle
+      drawRectangle();
+    } else if (isFreehand && isLassoActive) {
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setLassoPoints((prevPoints) => [...prevPoints, { x, y }]);
+
+      // Draw the lasso shape as the user moves
+      const ctx = canvasRef.current!.getContext("2d")!;
+      ctx.strokeStyle = freehandColor;
+      ctx.lineWidth = 0;
+      ctx.beginPath();
+      ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+      lassoPoints.forEach((point) => {
+        ctx.lineTo(point.x, point.y);
+      });
+      ctx.lineTo(x, y);
+      ctx.stroke();
     } else {
       const spacingRatio = brushSpacing / 10;
       const jitterTangent = brushTangentJitter * 100;
@@ -561,7 +755,28 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   // POINTER UP START
   const handlePointerUp = () => {
     if (isCreatingShape) {
-      //shape drawing logic
+      // Finalize the rectangle
+
+      drawRectangle();
+      setShapeStartPoint(null);
+      setShapeEndPoint(null);
+      //   setCreatingShape(false);
+    } else if (isFreehand && isLassoActive) {
+      setIsLassoActive(false);
+
+      // Close the lasso shape
+      const ctx = canvasRef.current!.getContext("2d")!;
+      ctx.fillStyle = freehandColor;
+      ctx.beginPath();
+      ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
+      lassoPoints.forEach((point) => {
+        ctx.lineTo(point.x, point.y);
+      });
+      ctx.closePath();
+      ctx.fill();
+
+      // Reset lasso points
+      setLassoPoints([]);
     } else {
       setIsDrawing(false);
     }

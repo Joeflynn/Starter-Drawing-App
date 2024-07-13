@@ -12,12 +12,9 @@ const ColorSelectorWrapper: React.FC<Props> = ({ children }) => {
         <Card className="p-2 w-[280px] pointer-events-auto	">
           <div className=" flex h-fit w-fit  flex-col items-center justify-center rounded-lg p-1">
             <div className="grid gap-4">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <h4 className="font-medium leading-none">Color</h4>
-                <p className="text-sm text-muted-foreground hidden">
-                  Set primary color.
-                </p>
-              </div>
+              </div> */}
               <div className="grid gap-4 mx-auto">{children}</div>
             </div>
           </div>

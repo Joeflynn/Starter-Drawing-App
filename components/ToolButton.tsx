@@ -6,6 +6,10 @@ import {
   Cursor20Regular,
   Eraser24Regular,
   InkingTool24Regular,
+  Lasso24Regular,
+  PaintBucket24Regular,
+  ShapeOrganic20Regular,
+  Shapes24Regular,
 } from "@fluentui/react-icons";
 
 import { Card } from "@/components/ui/card";
@@ -41,7 +45,11 @@ export function ToolButton({ tool, isActive, onClick }: ToolButtonProps) {
       case "select":
         return <Cursor20Regular className="h-5 w-5" />;
       case "shapes":
-        return <CircleImage24Regular className="h-5 w-5" />;
+        return <Shapes24Regular className="h-5 w-5" />;
+      case "fill":
+        return <PaintBucket24Regular className="h-5 w-5" />;
+      case "freehand":
+        return <ShapeOrganic20Regular className="h-5 w-5" />;
       default:
         return null;
     }
