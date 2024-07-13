@@ -2,19 +2,22 @@
 
 import {
   Blur24Regular,
+  Circle20Regular,
   CircleImage24Regular,
   Cursor20Regular,
   Edit20Regular,
   Eraser24Regular,
   InkingTool24Regular,
   Lasso24Regular,
+  Line20Regular,
   PaintBucket24Regular,
+  Pentagon20Regular,
   ShapeOrganic20Regular,
   Shapes24Regular,
+  Square20Regular,
+  Star20Regular,
 } from "@fluentui/react-icons";
 
-import { Card } from "@/components/ui/card";
-import { Toggle } from "@/components/ui/toggle";
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,34 +28,33 @@ import {
 } from "@/components/ui/tooltip";
 
 type ToolButtonProps = {
-  tool: string;
-  isActive: boolean;
+  ShapeType: string;
+  isShapeActive: boolean;
   onClick: () => void;
 };
 
-export function ToolButton({ tool, isActive, onClick }: ToolButtonProps) {
+export function ShapeTypeButton({
+  ShapeType,
+  isShapeActive,
+  onClick,
+}: ToolButtonProps) {
   const style = {
-    borderWidth: isActive ? "1px" : "0px",
+    borderWidth: isShapeActive ? "1px" : "0px",
+    backgroundColor: isShapeActive ? "rgba(100,100,180,0.2)" : "transparent",
   };
 
   const renderIcon = () => {
-    switch (tool) {
-      case "brush":
-        return <InkingTool24Regular className="h-5 w-5" />;
-      case "eraser":
-        return <Eraser24Regular className="h-5 w-5" />;
-      case "smudge":
-        return <Blur24Regular className="h-5 w-5" />;
-      case "pencil":
-        return <Edit20Regular className="h-5 w-5" />;
-      case "select":
-        return <Cursor20Regular className="h-5 w-5" />;
-      case "shapes":
-        return <Shapes24Regular className="h-5 w-5" />;
-      case "fill":
-        return <PaintBucket24Regular className="h-5 w-5" />;
-      case "freehand":
-        return <ShapeOrganic20Regular className="h-5 w-5" />;
+    switch (ShapeType) {
+      case "Rectangle":
+        return <Square20Regular className="h-5 w-5" />;
+      case "Elipse":
+        return <Circle20Regular className="h-5 w-5" />;
+      case "Line":
+        return <Line20Regular className="h-5 w-5" />;
+      case "Polygon":
+        return <Pentagon20Regular className="h-5 w-5" />;
+      case "Star":
+        return <Star20Regular className="h-5 w-5" />;
       default:
         return null;
     }
@@ -73,7 +75,7 @@ export function ToolButton({ tool, isActive, onClick }: ToolButtonProps) {
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p> {tool} </p>
+            <p> {ShapeType} </p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

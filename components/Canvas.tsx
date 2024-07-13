@@ -49,6 +49,7 @@ interface DrawingCanvasProps {
   shapeHoleOuterRadius: number;
   isAltKeyDown: boolean;
   isShiftKeyDown: boolean;
+  fillTolerance: number;
 }
 
 export const Canvas: React.FC<DrawingCanvasProps> = ({
@@ -96,6 +97,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   shapeHoleOuterRadius,
   isAltKeyDown,
   isShiftKeyDown,
+  fillTolerance,
 }) => {
   // Shapes state
   let [shapeStartPos, setShapeStartPos] = React.useState({ x: 0, y: 0 });
@@ -130,6 +132,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const [isPainting, setIsPainting] = useState<boolean>(false);
   const [isFilling, setIsFilling] = useState<boolean>(false);
   const [isFreehand, setIsFreehand] = useState<boolean>(false);
+  const [isPencil, setIsPencil] = useState<boolean>(false);
 
   useEffect(() => {
     setIsPainting(activeTool === "brush");
@@ -141,6 +144,10 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   useEffect(() => {
     setIsSmudging(activeTool === "smudge");
+  }, [activeTool]);
+
+  useEffect(() => {
+    setIsPencil(activeTool === "pencil");
   }, [activeTool]);
 
   useEffect(() => {
@@ -188,6 +195,79 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       setBrushCanvas(canvas);
       setBrushCtx(ctx);
     }
+  }, []);
+
+  //DROP IMAGE INTO CANVAS
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const drawImageOnCanvas = (img: HTMLImageElement) => {
+      const scaleFactor = Math.min(
+        canvas.width / img.width,
+        canvas.height / img.height
+      );
+      const newWidth = img.width * scaleFactor;
+      const newHeight = img.height * scaleFactor;
+      const x = (canvas.width - newWidth) / 2;
+      const y = (canvas.height - newHeight) / 2;
+
+      ctx.drawImage(img, x, y, newWidth, newHeight);
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+
+      if (e.dataTransfer?.files) {
+        const file = e.dataTransfer.files[0];
+        if (file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => drawImageOnCanvas(img);
+            img.src = event.target?.result as string;
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf("image") !== -1) {
+            const blob = items[i].getAsFile();
+            if (blob) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => drawImageOnCanvas(img);
+                img.src = event.target?.result as string;
+              };
+              reader.readAsDataURL(blob);
+            }
+          }
+        }
+      }
+    };
+
+    canvas.addEventListener("drop", handleDrop);
+    canvas.addEventListener("dragover", handleDragOver);
+    document.addEventListener("paste", handlePaste);
+
+    return () => {
+      canvas.removeEventListener("drop", handleDrop);
+      canvas.removeEventListener("dragover", handleDragOver);
+      document.removeEventListener("paste", handlePaste);
+    };
   }, []);
 
   // CANVAS BACKGROUND COLOR
@@ -263,6 +343,12 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   //Lasso variables
   const [isLassoActive, setIsLassoActive] = useState(false);
   const [lassoPoints, setLassoPoints] = useState<
+    Array<{ x: number; y: number }>
+  >([]);
+
+  //Pencil variables
+  const [isPencilActive, setIsPencilActive] = useState(false);
+  const [pencilPoints, setPencilPoints] = useState<
     Array<{ x: number; y: number }>
   >([]);
 
@@ -537,7 +623,13 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       );
       canvasStates.current.push(imageData);
 
-      floodFill(ctx, Math.floor(x), Math.floor(y), brushColor, 10); // Adjust tolerance as needed
+      floodFill(
+        ctx,
+        Math.floor(x),
+        Math.floor(y),
+        brushColor,
+        fillTolerance * 2.55
+      ); // Adjust tolerance as needed
     } else if (isCreatingShape) {
       setShapeStartPoint({ x, y });
       setShapeEndPoint({ x, y });
@@ -547,6 +639,10 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       e.preventDefault();
       setIsLassoActive(true);
       setLassoPoints([{ x, y }]);
+    } else if (isPencil) {
+      e.preventDefault();
+      setIsPencilActive(true);
+      setPencilPoints([{ x, y }]);
     } else {
       e.preventDefault();
       setIsDrawing(true);
@@ -596,7 +692,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       // Draw the lasso shape as the user moves
       const ctx = canvasRef.current!.getContext("2d")!;
       ctx.strokeStyle = freehandColor;
-      ctx.lineWidth = 0;
+      ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
       lassoPoints.forEach((point) => {
@@ -604,6 +700,29 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       });
       ctx.lineTo(x, y);
       ctx.stroke();
+    } else if (isPencil && isPencilActive) {
+      //PENCIL TOOL
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const currentPoint = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      setPencilPoints((prevPoints) => [...prevPoints, { x, y }]);
+      const ctx = canvasRef.current!.getContext("2d")!;
+      ctx.strokeStyle = brushColor;
+      ctx.lineWidth = brushWidth / 2;
+      ctx.beginPath();
+      ctx.moveTo(pencilPoints[0].x, pencilPoints[0].y);
+      pencilPoints.forEach((point) => {
+        ctx.lineTo(point.x, point.y);
+      });
+      ctx.lineTo(x, y);
+      ctx.lineJoin = ctx.lineCap = "round";
+      ctx.stroke();
+      ctx.globalAlpha = brushOpacity;
     } else {
       const spacingRatio = brushSpacing / 10;
       const jitterTangent = brushTangentJitter * 100;
@@ -777,6 +896,15 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
       // Reset lasso points
       setLassoPoints([]);
+    } else if (isPencil && isPencilActive) {
+      setIsPencilActive(false);
+      const ctx = canvasRef.current!.getContext("2d")!;
+
+      ctx.closePath();
+      ctx.globalAlpha = brushOpacity;
+
+      // Reset lasso points
+      setPencilPoints([]);
     } else {
       setIsDrawing(false);
     }

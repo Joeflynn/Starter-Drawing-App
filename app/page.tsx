@@ -37,6 +37,9 @@ import {
   Copy16Regular,
   Toolbox20Regular,
   WrenchScrewdriver20Regular,
+  FullScreenMaximize20Regular,
+  HandDraw20Regular,
+  TargetEdit20Regular,
 } from "@fluentui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -86,6 +89,7 @@ import dynamic from "next/dynamic";
 
 import { CanvasSettings } from "@/components/CanvasSettings";
 import { ShapeButton } from "@/components/ShapeButton";
+import { ShapeTypeButton } from "@/components/ShapeTypeButton";
 
 // Then you can use <ClientSideComponent /> in your main component
 
@@ -105,6 +109,7 @@ export default function Home() {
   let [brushNormalJitter, setBrushNormalJitter] = React.useState(0.01);
   let [pressureSize, setPressureSize] = React.useState(true);
   let [pressureOpacity, setPressureOpacity] = React.useState(true);
+  let [fillTolerance, setFillTolerance] = React.useState(10);
 
   const [canvasWidth, setCanvasWidth] = useState(1200);
   const [canvasHeight, setCanvasHeight] = useState(800);
@@ -140,11 +145,14 @@ export default function Home() {
     "eraser",
     "smudge",
     "select",
+    "pencil",
     "shapes",
     "fill",
     "freehand",
   ];
+  const ShapeType = ["Rectangle", "Elipse", "Line", "Polygon", "Star"];
   const [activeTool, setActiveTool] = useState<string>(tools[0]);
+  const [activeShape, setActiveShape] = useState<string>(ShapeType[0]);
 
   const [showBrushControls, setShowBrushControls] = useState(false);
 
@@ -186,8 +194,140 @@ export default function Home() {
     switch (activeTool) {
       case "brush":
         return (
-          <div>
-            <p> Brush </p>
+          <div className="Flex flex-col space-y-3 px-2 py-1">
+            <h3 className="font-semibold leading-none">Brush Settings</h3>
+            <LabeledSlider
+              label="Hardness"
+              defaultValue={brushSoftness}
+              minValue={0.01}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushSoftness}
+            />
+            <LabeledSlider
+              label="Spacing"
+              defaultValue={brushSpacing}
+              minValue={0.1}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushSpacing}
+            />
+            <LabeledSlider label="Rotation" />
+            <LabeledSlider
+              label="Flow jitter"
+              defaultValue={brushFlowJitter}
+              minValue={0}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushFlowJitter}
+            />
+
+            <LabeledSlider
+              label="Size jitter"
+              defaultValue={brushSizeJitter}
+              minValue={0.01}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushSizeJitter}
+            />
+
+            <LabeledSlider
+              label="Rotation jitter"
+              defaultValue={brushRotationJitter}
+              minValue={0}
+              maxValue={90}
+              step={1}
+              onChange={setBrushRotationJitter}
+            />
+
+            <LabeledSlider
+              label="Scatter"
+              defaultValue={brushScatter}
+              minValue={0}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushScatter}
+            />
+
+            <LabeledSlider
+              label="Tangent jitter"
+              defaultValue={brushTangentJitter}
+              minValue={0.01}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushTangentJitter}
+            />
+
+            <LabeledSlider
+              label="Normal jitter"
+              defaultValue={brushNormalJitter}
+              minValue={0.01}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushNormalJitter}
+            />
+
+            <LabeledSlider
+              label="Opacity"
+              defaultValue={brushOpacity}
+              minValue={0}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushOpacity}
+            />
+
+            <div className="items-top flex space-x-2">
+              <Checkbox
+                id="pressureSize"
+                aria-label="Pressure affects size"
+                defaultChecked={pressureSize}
+                onChange={() => setPressureSize(!pressureSize)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="pressureSize"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Size
+                </label>
+                <p className="text-sm text-muted-foreground">
+                  Pen pressure affects size
+                </p>
+              </div>
+            </div>
+
+            <div className="items-top flex space-x-2">
+              <Checkbox
+                id="pressureOpacity"
+                aria-label="Pressure affects size"
+                defaultChecked={true}
+                onChange={() => {}}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="pressureOpacity"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Opacity
+                </label>
+                <p className="text-sm text-muted-foreground">
+                  Pen pressure affects Opacity
+                </p>
+              </div>
+            </div>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle className=" size-10 p-1 pointer-events-auto">
+                    <TargetEdit20Regular className="h-5 w-5" />
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p> Use pen pressure </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         );
       case "eraser":
@@ -208,10 +348,26 @@ export default function Home() {
             <p> Select </p>
           </div>
         );
+      case "Pencil":
+        return (
+          <div>
+            <p> Pencil</p>
+          </div>
+        );
       case "shapes":
         return (
           <div className="grid w-full gap-2">
             <h4 className="font-medium leading-none">Shape Options</h4>
+            <div className="my-auto flex w-full content-center items-center justify-between gap-1 p-0 pointer-events-auto">
+              {ShapeType.map((ShapeType) => (
+                <ShapeTypeButton
+                  key={ShapeType}
+                  ShapeType={ShapeType}
+                  isShapeActive={ShapeType === activeShape}
+                  onClick={() => setActiveShape(ShapeType)}
+                />
+              ))}
+            </div>
             <LabeledSlider
               label="Stroke width"
               defaultValue={2}
@@ -219,14 +375,7 @@ export default function Home() {
               maxValue={10}
               step={1}
             />
-            <Label htmlFor="email">Stroke width</Label>
-            <Input
-              value={1}
-              className="w-32"
-              type="number"
-              id="Height"
-              placeholder="5"
-            />
+
             <Label htmlFor="email">Points</Label>
             <Input
               value={1}
@@ -264,13 +413,13 @@ export default function Home() {
       case "fill":
         return (
           <div className="grid w-full max-w-sm items-center gap-2">
-            <Label htmlFor="email">Fill tolerance</Label>
-            <Input
-              value={10}
-              className="w-32"
-              type="number"
-              id="Height"
-              placeholder="5"
+            <LabeledSlider
+              label="Fill tolerance"
+              minValue={0}
+              maxValue={100}
+              step={1}
+              defaultValue={fillTolerance}
+              onChange={setFillTolerance}
             />
           </div>
         );
@@ -558,7 +707,7 @@ export default function Home() {
               />
             </div>
             <Toggle
-              className=" h-10 w-10 p-2"
+              className=" h-10 w-10 p-2 hidden"
               onClick={() => setShowBrushControls(!showBrushControls)}
             >
               <Options24Regular className="h-5 w-5" />
@@ -684,6 +833,9 @@ export default function Home() {
                       Pen pressure affects Opacity
                     </p>
                   </div>
+                  <Toggle className=" size-10 p-1 pointer-events-auto">
+                    <TargetEdit20Regular className="h-5 w-5" />
+                  </Toggle>
                 </div>
               </BrushControlsFlyout>
             )}
@@ -711,6 +863,12 @@ export default function Home() {
           </div>
         </MainAreaWrapper>
         <BottomBarWrapper>
+          <Toggle
+            className="h-11 w-11 border border-border bg-card p-3"
+            aria-label="Toggle text tool"
+          >
+            <FullScreenMaximize20Regular className="h-5 w-5" />
+          </Toggle>
           <ZoomControlsWrapper>
             <TooltipProvider>
               <Tooltip>
@@ -818,6 +976,7 @@ export default function Home() {
           shapeType={shapeType}
           isAltKeyDown={isAltKeyDown}
           isShiftKeyDown={isShiftKeyDown}
+          fillTolerance={fillTolerance}
         />
       </CanvasWrapper>
     </main>
