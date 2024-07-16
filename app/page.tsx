@@ -1,7 +1,7 @@
 "use client";
 
 import Canvas from "@/components/Canvas";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, use } from "react";
 import { useTheme } from "next-themes";
 
 import MenuBar from "@/components/TopBar";
@@ -40,6 +40,7 @@ import {
   FullScreenMaximize20Regular,
   HandDraw20Regular,
   TargetEdit20Regular,
+  Cone16Regular,
 } from "@fluentui/react-icons";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
@@ -90,6 +91,8 @@ import dynamic from "next/dynamic";
 import { CanvasSettings } from "@/components/CanvasSettings";
 import { ShapeButton } from "@/components/ShapeButton";
 import { ShapeTypeButton } from "@/components/ShapeTypeButton";
+import { Slider } from "react-aria-components";
+import CompactSlider from "@/components/CompactSlider";
 
 // Then you can use <ClientSideComponent /> in your main component
 
@@ -99,7 +102,7 @@ export default function Home() {
   let [brushSoftness, setBrushSoftness] = React.useState(0.5);
   let [brushOpacity, setBrushOpacity] = React.useState(1.0);
   let [brushRotation, setBrushRotation] = React.useState(0.0);
-  let [brushSpacing, setBrushSpacing] = React.useState(0.9);
+  let [brushSpacing, setBrushSpacing] = React.useState(0.4);
   let [brushBlendMode, setBrushBlendMode] = React.useState("normal");
   let [brushFlowJitter, setBrushFlowJitter] = React.useState(0.0);
   let [brushSizeJitter, setBrushSizeJitter] = React.useState(0.01);
@@ -109,7 +112,9 @@ export default function Home() {
   let [brushNormalJitter, setBrushNormalJitter] = React.useState(0.01);
   let [pressureSize, setPressureSize] = React.useState(true);
   let [pressureOpacity, setPressureOpacity] = React.useState(true);
-  let [fillTolerance, setFillTolerance] = React.useState(10);
+  let [brushShape, setBrushShape] = React.useState(1);
+
+  let [fillTolerance, setFillTolerance] = React.useState(20);
 
   const [canvasWidth, setCanvasWidth] = useState(1200);
   const [canvasHeight, setCanvasHeight] = useState(800);
@@ -150,7 +155,7 @@ export default function Home() {
     "fill",
     "freehand",
   ];
-  const ShapeType = ["Rectangle", "Elipse", "Line", "Polygon", "Star"];
+  const ShapeType = ["Rectangle", "Elipse", "Polygon", "Line", "Arrow", "Star"];
   const [activeTool, setActiveTool] = useState<string>(tools[0]);
   const [activeShape, setActiveShape] = useState<string>(ShapeType[0]);
 
@@ -180,6 +185,7 @@ export default function Home() {
     "roundedRectangle",
     "elipse",
     "star",
+    "arrow",
     "burst",
     "gear",
     "arc",
@@ -189,6 +195,181 @@ export default function Home() {
     "line",
   ];
   const [shapeType, setShapeType] = useState<string>(shapes[1]);
+
+  const renderActiveToolQuickOptions = () => {
+    switch (activeTool) {
+      case "brush":
+        return (
+          <div className="flex flex-row w-64 gap-1 h-10">
+            <div className="flex p-1 items-center">
+              {" "}
+              <Label className="flex-1 mt-1">Hardness</Label>
+            </div>
+            <div className="grid w-full h-10 px-3 py-2 max-w-sm items-center ">
+              <CompactSlider
+                label="Softness"
+                minValue={0}
+                maxValue={1}
+                step={0.01}
+                defaultValue={brushSoftness}
+                onChange={setBrushSoftness}
+              />
+            </div>
+            <div className="flex items-center p-1 w-10 h-10 ">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Toggle className=" size-8 p-1">
+                      <TargetEdit20Regular className="h-5 w-5" />
+                    </Toggle>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p> Use pen pressure </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        );
+      case "eraser":
+        return (
+          <div className="flex flex-row w-64 gap-1 h-10">
+            <div className="flex py-1 pr-0 pl-1 items-center">
+              {" "}
+              <Cone16Regular className="size-5 text-secondary-foreground" />
+            </div>
+
+            {/* <div className="flex p-1 items-center">
+              {" "}
+              <Label className="flex-1 mt-1">Hardness</Label>
+            </div> */}
+
+            <div className="grid w-full h-10 px-1 py-2 max-w-sm items-center ">
+              <CompactSlider
+                label="Softness"
+                minValue={0}
+                maxValue={1}
+                step={0.01}
+                defaultValue={brushSoftness}
+                onChange={setBrushSoftness}
+              />
+            </div>
+            <div className="flex items-center p-1 w-10 h-10 ">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Toggle className=" size-8 p-1">
+                      <TargetEdit20Regular className="h-5 w-5" />
+                    </Toggle>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p> Use pen pressure </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        );
+      case "smudge":
+        return (
+          <div className="flex flex-row w-64 gap-1 h-10">
+            <div className="flex p-1 items-center">
+              {" "}
+              <Label className="flex-1 mt-1">Strength</Label>
+            </div>
+
+            <div className="grid w-full h-10 px-3 py-2 max-w-sm items-center ">
+              <CompactSlider
+                label="Strength"
+                minValue={0}
+                maxValue={1}
+                step={0.01}
+                defaultValue={brushOpacity}
+                onChange={setBrushOpacity}
+              />
+            </div>
+          </div>
+        );
+      case "select":
+        return (
+          <div>
+            <p> Select </p>
+          </div>
+        );
+      case "pencil":
+        return (
+          <div className="flex flex-row w-64 gap-1 h-10">
+            <div className="flex p-1 items-center">
+              {" "}
+              <Label className="flex-1 mt-1">Smoothing</Label>
+            </div>
+            <div className="grid w-60 h-10 px-3 py-2 max-w-sm items-center ">
+              <CompactSlider
+                label="Tolerance"
+                minValue={0}
+                maxValue={100}
+                step={1}
+                defaultValue={fillTolerance}
+                onChange={setFillTolerance}
+              />
+            </div>
+          </div>
+        );
+      case "shapes":
+        return (
+          <div className="my-auto flex w-full content-center items-center justify-between gap-1 p-1 pointer-events-auto">
+            {ShapeType.map((ShapeType) => (
+              <ShapeTypeButton
+                key={ShapeType}
+                ShapeType={ShapeType}
+                isShapeActive={ShapeType === activeShape}
+                onClick={() => setActiveShape(ShapeType)}
+              />
+            ))}
+          </div>
+        );
+      case "fill":
+        return (
+          <div className="flex flex-row w-64 gap-1 h-10">
+            <div className="flex p-1 items-center">
+              {" "}
+              <Label className="flex-1 mt-1">Tolerance</Label>
+            </div>
+            <div className="grid w-60 h-10 px-3 py-2 max-w-sm items-center ">
+              <CompactSlider
+                label="Tolerance"
+                minValue={0}
+                maxValue={100}
+                step={1}
+                defaultValue={fillTolerance}
+                onChange={setFillTolerance}
+              />
+            </div>
+          </div>
+        );
+      case "freehand":
+        return (
+          <div className="flex flex-row w-64 gap-1 h-10">
+            <div className="flex p-1 items-center">
+              {" "}
+              <Label className="flex-1">Smoothing</Label>
+            </div>
+            <div className="grid w-60 h-10 px-3 py-2 max-w-sm items-center ">
+              <CompactSlider
+                label="Tolerance"
+                minValue={0}
+                maxValue={100}
+                step={1}
+                defaultValue={fillTolerance}
+                onChange={setFillTolerance}
+              />
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   const renderActiveToolOptions = () => {
     switch (activeTool) {
@@ -212,7 +393,22 @@ export default function Home() {
               step={0.01}
               onChange={setBrushSpacing}
             />
-            <LabeledSlider label="Rotation" />
+            <LabeledSlider
+              label="Brush Shape"
+              defaultValue={brushShape}
+              minValue={0.1}
+              maxValue={1}
+              step={0.01}
+              onChange={setBrushShape}
+            />
+            <LabeledSlider
+              label="Rotation"
+              defaultValue={brushRotation}
+              minValue={0}
+              maxValue={180}
+              step={1}
+              onChange={setBrushRotation}
+            />
             <LabeledSlider
               label="Flow jitter"
               defaultValue={brushFlowJitter}
@@ -281,7 +477,9 @@ export default function Home() {
                 id="pressureSize"
                 aria-label="Pressure affects size"
                 defaultChecked={pressureSize}
-                onChange={() => setPressureSize(!pressureSize)}
+                onChange={(e) =>
+                  setPressureSize((e.target as HTMLInputElement).checked)
+                }
               />
               <div className="grid gap-1.5 leading-none">
                 <label
@@ -448,6 +646,22 @@ export default function Home() {
       }
     }
   }, [eyedropperColor]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+        pickColor();
+        console.log("Color picker activated");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const [showColorSelector, setShowColorSelector] = useState(false);
   const [showToolOptions, setShowToolOptions] = useState(false);
 
@@ -487,7 +701,7 @@ export default function Home() {
     <main className="grid h-screen w-screen grid-cols-1 grid-rows-1 touch-none p-0 bg-canvas overflow-hidden">
       <div className="pointer-events-none inset-0 z-10 col-start-1 row-start-1 flex h-full w-full flex-col items-start">
         <TopBarWrapper>
-          <nav className="w-fit pointer-events-auto">
+          <nav className="w-[324px] pointer-events-auto">
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Toggle
@@ -579,24 +793,31 @@ export default function Home() {
               </Card>
             </div>
           )}
-          <Toggle
-            className="p-0 pointer-events-auto"
-            onClick={() => setShowColorSelector(!showColorSelector)}
-          >
-            <div className="my-auto flex h-11 w-11 items-center justify-center p-2">
-              <div
-                className={`flex h-8 w-8 flex-row items-center justify-center rounded-full border border-[#5683DE] p-0 ${showColorSelector ? "border-2" : ""}`}
-              >
-                <div
-                  className="h-7 w-7 rounded-full border border-border "
-                  style={{
-                    backgroundColor: color.toString("css"),
-                  }}
-                ></div>
+          <div className="flex flex-row gap-2 w-fit">
+            <Card className="p-1 w-[280px] h-fit pointer-events-auto	">
+              {" "}
+              <div className=" flex items-center justify-center">
+                {renderActiveToolQuickOptions()}
               </div>
-            </div>
-          </Toggle>
-
+            </Card>
+            <Toggle
+              className="p-0 pointer-events-auto"
+              onClick={() => setShowColorSelector(!showColorSelector)}
+            >
+              <div className="my-auto flex h-11 w-11 items-center justify-center p-2">
+                <div
+                  className={`flex h-8 w-8 flex-row items-center justify-center rounded-full border border-[#5683DE] p-0 ${showColorSelector ? "border-2" : ""}`}
+                >
+                  <div
+                    className="h-7 w-7 rounded-full border border-border "
+                    style={{
+                      backgroundColor: color.toString("css"),
+                    }}
+                  ></div>
+                </div>
+              </div>
+            </Toggle>
+          </div>
           {showColorSelector && (
             <ColorSelectorWrapper>
               <div className=" w-full flex justify-between content-center h-6 py-0">
@@ -977,6 +1198,7 @@ export default function Home() {
           isAltKeyDown={isAltKeyDown}
           isShiftKeyDown={isShiftKeyDown}
           fillTolerance={fillTolerance}
+          brushShape={brushShape}
         />
       </CanvasWrapper>
     </main>

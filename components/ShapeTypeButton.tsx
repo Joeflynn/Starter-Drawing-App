@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowUpRight20Regular,
   Blur24Regular,
   Circle20Regular,
   CircleImage24Regular,
@@ -16,6 +17,7 @@ import {
   Shapes24Regular,
   Square20Regular,
   Star20Regular,
+  Triangle20Regular,
 } from "@fluentui/react-icons";
 
 import React, { useRef, useEffect } from "react";
@@ -53,6 +55,8 @@ export function ShapeTypeButton({
         return <Line20Regular className="h-5 w-5" />;
       case "Polygon":
         return <Pentagon20Regular className="h-5 w-5" />;
+      case "Arrow":
+        return <ArrowUpRight20Regular className="h-5 w-5" />;
       case "Star":
         return <Star20Regular className="h-5 w-5" />;
       default:
@@ -69,7 +73,7 @@ export function ShapeTypeButton({
               variant="outline"
               style={style}
               onClick={onClick}
-              className="h-10 w-10 p-2"
+              className="h-8 w-8 p-0"
             >
               {renderIcon()}
             </Button>

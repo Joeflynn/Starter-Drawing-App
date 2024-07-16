@@ -3,6 +3,7 @@
 import React, { use } from "react";
 import { useEffect, useRef, useState } from "react";
 import { ShapeDraw } from "@/lib/ShapeDraw";
+import { circleCursor } from "@/lib/Cursor";
 
 interface DrawingCanvasProps {
   brushColor: string;
@@ -50,6 +51,7 @@ interface DrawingCanvasProps {
   isAltKeyDown: boolean;
   isShiftKeyDown: boolean;
   fillTolerance: number;
+  brushShape: number;
 }
 
 export const Canvas: React.FC<DrawingCanvasProps> = ({
@@ -98,6 +100,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   isAltKeyDown,
   isShiftKeyDown,
   fillTolerance,
+  brushShape,
 }) => {
   // Shapes state
   let [shapeStartPos, setShapeStartPos] = React.useState({ x: 0, y: 0 });
@@ -196,6 +199,13 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       setBrushCtx(ctx);
     }
   }, []);
+
+  //PENCIL TOOL UTILITIES
+
+  interface Point {
+    x: number;
+    y: number;
+  }
 
   //DROP IMAGE INTO CANVAS
   useEffect(() => {
@@ -348,9 +358,20 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
   //Pencil variables
   const [isPencilActive, setIsPencilActive] = useState(false);
-  const [pencilPoints, setPencilPoints] = useState<
-    Array<{ x: number; y: number }>
-  >([]);
+  //const [pencilPoints, setPencilPoints] = useState<
+  //   Array<{ x: number; y: number }>
+  // >([]);
+  const pencilPoints = useRef<Point[]>([]);
+
+  function midPointBtw(
+    p1: { x: number; y: number },
+    p2: { x: number; y: number }
+  ) {
+    return {
+      x: p1.x + (p2.x - p1.x) / 2,
+      y: p1.y + (p2.y - p1.y) / 2,
+    };
+  }
 
   // LOGIC FOR CREATING THE FEATHERED GRADIENT BRUSH TIP FOR THE SMUDGE TOOL
 
@@ -374,6 +395,53 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   };
 
   const [copy, setCopy] = useState<ImageData | null>(null);
+
+  useEffect(() => {
+    console.log(pressureSize);
+  }, [pressureSize]);
+
+  const createScalableRadialGradient = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    brushSize: number,
+    brushSoftness: number,
+    scaleX: number = 1,
+    scaleY: number = 1,
+    rotation: number = 0,
+    brushColor1Rgba: string,
+    brushColor2Rgba: string,
+    brushColor3Rgba: string
+  ) => {
+    brushSize = Math.max(0, brushSize);
+    const radiusX = (brushSize / 2) * scaleX;
+    const radiusY = (brushSize / 2) * scaleY;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+
+    const gradient = ctx.createRadialGradient(
+      0,
+      0,
+      brushSize / Math.max(4, (1 - brushSoftness) * 10),
+      0,
+      0,
+      Math.max(radiusX, radiusY)
+    );
+
+    gradient.addColorStop(0, brushColor1Rgba);
+    gradient.addColorStop(brushSoftness, brushColor2Rgba);
+    gradient.addColorStop(1, brushColor3Rgba);
+
+    ctx.fillStyle = gradient;
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  };
 
   // EXPORT IMAGE UNDO REDO START
 
@@ -642,7 +710,11 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     } else if (isPencil) {
       e.preventDefault();
       setIsPencilActive(true);
-      setPencilPoints([{ x, y }]);
+      pencilPoints.current = [
+        { x: e.clientX - rect.left, y: e.clientY - rect.top },
+      ];
+
+      // setPencilPoints([{ x, y }]);
     } else {
       e.preventDefault();
       setIsDrawing(true);
@@ -691,7 +763,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
 
       // Draw the lasso shape as the user moves
       const ctx = canvasRef.current!.getContext("2d")!;
-      ctx.strokeStyle = freehandColor;
+      ctx.strokeStyle = brushColor;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
@@ -703,24 +775,32 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
     } else if (isPencil && isPencilActive) {
       //PENCIL TOOL
       const rect = canvasRef.current!.getBoundingClientRect();
-      const currentPoint = {
+      const ctx = canvasRef.current!.getContext("2d")!;
+
+      pencilPoints.current.push({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
-      };
-
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      setPencilPoints((prevPoints) => [...prevPoints, { x, y }]);
-      const ctx = canvasRef.current!.getContext("2d")!;
-      ctx.strokeStyle = brushColor;
-      ctx.lineWidth = brushWidth / 2;
-      ctx.beginPath();
-      ctx.moveTo(pencilPoints[0].x, pencilPoints[0].y);
-      pencilPoints.forEach((point) => {
-        ctx.lineTo(point.x, point.y);
       });
-      ctx.lineTo(x, y);
+
+      let p1 = pencilPoints.current[0];
+      let p2 = pencilPoints.current[1];
+
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineWidth = brushWidth / 3;
       ctx.lineJoin = ctx.lineCap = "round";
+      ctx.strokeStyle = brushColor2Rgba;
+      ctx.globalAlpha = brushFlow;
+
+      for (let i = 1, len = pencilPoints.current.length; i < len; i++) {
+        const midPoint = midPointBtw(p1, p2);
+        ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
+        p1 = pencilPoints.current[i];
+        p2 = pencilPoints.current[i + 1];
+        if (p2) {
+          ctx.lineTo(p1.x, p1.y);
+        }
+      }
       ctx.stroke();
       ctx.globalAlpha = brushOpacity;
     } else {
@@ -747,12 +827,17 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       pressure = Math.max(0.001, Math.min(pressure, 1));
       const randomSize = Math.random() * jitterSize - jitterSize / 2;
 
-      const brushSize = brushWidth * pressure + randomSize;
+      const brushSize =
+        brushWidth * (pressureSize ? pressure : 0.5) + randomSize;
       const stampSpacing = brushWidth * spacingRatio;
 
       const ctx = canvasRef.current!.getContext("2d")!;
       ctx.lineJoin = ctx.lineCap = "round";
-      ctx.globalAlpha = pressure * 2 * brushFlow;
+      ctx.globalAlpha = (pressureOpacity ? pressure : 1) * 2 * brushFlow;
+      console.log(brushWidth);
+      console.log(ctx.globalAlpha);
+      console.log(pressureOpacity);
+      console.log(pressureSize);
 
       if (isErasing) {
         ctx.globalCompositeOperation = "destination-out";
@@ -831,7 +916,6 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
           const randomTangent =
             Math.random() * jitterTangent - jitterTangent / 2;
           const randomNormal = Math.random() * jitterNormal - jitterNormal / 2;
-
           const x =
             lastPoint!.x +
             Math.sin(angle) * i +
@@ -843,26 +927,33 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
             Math.cos(angle) * randomTangent +
             Math.sin(angle) * randomNormal;
 
-          const radgrad = ctx.createRadialGradient(
-            x,
-            y,
-            brushSize / 4,
-            x,
-            y,
-            brushSize / 2
+          let brushAngle = Math.atan2(
+            currentPoint.y - lastPoint!.y,
+            currentPoint.x - lastPoint!.x
           );
 
-          radgrad.addColorStop(0, brushColor1Rgba);
-          radgrad.addColorStop(brushSoftness, brushColor2Rgba);
-          radgrad.addColorStop(1, brushColor3Rgba);
+          brushAngle = brushAngle + brushRotation;
 
-          ctx.fillStyle = radgrad;
-          ctx.fillRect(
-            x - brushSize / 2,
-            y - brushSize / 2,
+          Math.random() * brushRotationJitter - brushRotationJitter / 2;
+          brushAngle +=
+            (Math.random() * (brushRotationJitter - brushRotationJitter / 2)) /
+            20;
+          createScalableRadialGradient(
+            ctx,
+            x,
+            y,
             brushSize,
-            brushSize
+            brushSoftness,
+            brushShape, // scaleX
+            1, // scaleY (this will make the brush half as tall as it is wide)
+            brushAngle, // Use the angle between points as rotation
+            brushColor1Rgba,
+            brushColor2Rgba,
+            brushColor3Rgba
           );
+
+          // Debug: Log the coordinates and angle
+          console.log(`Stamp at (${x}, ${y}), angle: ${angle}`);
         }
       }
 
@@ -875,17 +966,14 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const handlePointerUp = () => {
     if (isCreatingShape) {
       // Finalize the rectangle
-
       drawRectangle();
       setShapeStartPoint(null);
       setShapeEndPoint(null);
       //   setCreatingShape(false);
     } else if (isFreehand && isLassoActive) {
       setIsLassoActive(false);
-
-      // Close the lasso shape
       const ctx = canvasRef.current!.getContext("2d")!;
-      ctx.fillStyle = freehandColor;
+      ctx.fillStyle = brushColor;
       ctx.beginPath();
       ctx.moveTo(lassoPoints[0].x, lassoPoints[0].y);
       lassoPoints.forEach((point) => {
@@ -893,30 +981,33 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       });
       ctx.closePath();
       ctx.fill();
+      ctx.globalCompositeOperation = "source-over";
 
-      // Reset lasso points
       setLassoPoints([]);
     } else if (isPencil && isPencilActive) {
       setIsPencilActive(false);
       const ctx = canvasRef.current!.getContext("2d")!;
-
+      pencilPoints.current = [];
       ctx.closePath();
-      ctx.globalAlpha = brushOpacity;
-
-      // Reset lasso points
-      setPencilPoints([]);
+      ctx.globalAlpha = brushFlow;
+      pencilPoints.current = [];
     } else {
       setIsDrawing(false);
     }
   };
   // POINTER UP END
+  //Custom Cursor
+  const diameter = brushWidth / 3;
+  console.log("DrawingCanvas.tsx: diameter: ", brushWidth * 2);
+
+  const cursor = circleCursor(diameter);
 
   return (
     <canvas
       ref={canvasRef}
       width={canvasWidth}
       height={canvasHeight}
-      style={{ touchAction: "none" }}
+      style={{ cursor: cursor, touchAction: "none" }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
