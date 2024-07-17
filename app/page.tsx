@@ -49,7 +49,7 @@ import { ColorChannel } from "@react-types/color";
 import { ToolButton } from "@/components/ToolButton";
 import BrushSlider from "@/components/BrushSlider";
 import BrushControl from "@/components/BrushControl";
-import { Checkbox } from "@/components/ui/checkbox";
+//import { Checkbox } from "@/components/ui/checkbox";
 import LabeledSlider from "@/components/LabeledSlider";
 import {
   Tooltip,
@@ -92,6 +92,7 @@ import { CanvasSettings } from "@/components/CanvasSettings";
 import { ShapeButton } from "@/components/ShapeButton";
 import { ShapeTypeButton } from "@/components/ShapeTypeButton";
 import { Slider } from "react-aria-components";
+import { Checkbox } from "@/components/CustomCheckbox";
 import CompactSlider from "@/components/CompactSlider";
 
 // Then you can use <ClientSideComponent /> in your main component
@@ -474,6 +475,24 @@ export default function Home() {
 
             <div className="items-top flex space-x-2">
               <Checkbox
+                onBlur={function Qa() {}}
+                onChange={setPressureSize}
+                onFocus={function Qa() {}}
+                onFocusChange={function Qa() {}}
+                onHoverChange={function Qa() {}}
+                onHoverEnd={function Qa() {}}
+                onHoverStart={function Qa() {}}
+                onKeyDown={function Qa() {}}
+                onKeyUp={function Qa() {}}
+
+                // defaultChecked={pressureSize}
+                // onChange={(e) =>
+                //   setPressureSize((e.target as HTMLInputElement).checked)
+                // }
+              >
+                Pressure affects size
+              </Checkbox>
+              {/* <Checkbox
                 id="pressureSize"
                 aria-label="Pressure affects size"
                 defaultChecked={pressureSize}
@@ -491,11 +510,28 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground">
                   Pen pressure affects size
                 </p>
-              </div>
+              </div> */}
             </div>
 
             <div className="items-top flex space-x-2">
               <Checkbox
+                onBlur={function Qa() {}}
+                onChange={setPressureOpacity}
+                onFocus={function Qa() {}}
+                onFocusChange={function Qa() {}}
+                onHoverChange={function Qa() {}}
+                onHoverEnd={function Qa() {}}
+                onHoverStart={function Qa() {}}
+                onKeyDown={function Qa() {}}
+                onKeyUp={function Qa() {}}
+                // defaultChecked={pressureOpacity}
+                // onChange={(e) =>
+                //   setPressureOpacity((e.target as HTMLInputElement).checked)
+                // }
+              >
+                Pen pressure affects Opacity
+              </Checkbox>
+              {/* <Checkbox
                 id="pressureOpacity"
                 aria-label="Pressure affects size"
                 defaultChecked={true}
@@ -511,7 +547,7 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground">
                   Pen pressure affects Opacity
                 </p>
-              </div>
+              </div> */}
             </div>
 
             <TooltipProvider>
@@ -1016,7 +1052,7 @@ export default function Home() {
                   onChange={setBrushOpacity}
                 />
 
-                <div className="items-top flex space-x-2">
+                {/* <div className="items-top flex space-x-2">
                   <Checkbox
                     id="pressureSize"
                     aria-label="Pressure affects size"
@@ -1034,10 +1070,10 @@ export default function Home() {
                       Pen pressure affects size
                     </p>
                   </div>
-                </div>
+                </div> */}
 
                 <div className="items-top flex space-x-2">
-                  <Checkbox
+                  {/* <Checkbox
                     id="pressureOpacity"
                     aria-label="Pressure affects size"
                     defaultChecked={true}
@@ -1053,7 +1089,7 @@ export default function Home() {
                     <p className="text-sm text-muted-foreground">
                       Pen pressure affects Opacity
                     </p>
-                  </div>
+                  </div> */}
                   <Toggle className=" size-10 p-1 pointer-events-auto">
                     <TargetEdit20Regular className="h-5 w-5" />
                   </Toggle>

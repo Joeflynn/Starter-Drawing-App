@@ -136,6 +136,14 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   const [isFilling, setIsFilling] = useState<boolean>(false);
   const [isFreehand, setIsFreehand] = useState<boolean>(false);
   const [isPencil, setIsPencil] = useState<boolean>(false);
+  const [isSelecting, setIsSelecting] = useState<boolean>(false);
+
+  const [selection, setSelection] = useState<ImageData | null>(null);
+  const [selectionPath, setSelectionPath] = useState<Path2D | null>(null);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [isDrawingSelection, setIsDrawingSelection] = useState<boolean>(false);
 
   useEffect(() => {
     setIsPainting(activeTool === "brush");
@@ -164,6 +172,175 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   useEffect(() => {
     setIsFreehand(activeTool === "freehand");
   }, [activeTool]);
+
+  useEffect(() => {
+    setIsSelecting(activeTool === "select");
+  }, [activeTool]);
+
+  const startLasso = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!.getContext("2d")!;
+    if (!canvas) return;
+
+    const rect = canvasRef.current!.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    console.log("startLasso called", x, y);
+
+    const path = new Path2D();
+    path.moveTo(x, y);
+    setSelectionPath(path);
+    setIsDrawingSelection(true);
+  };
+
+  const drawLasso = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawingSelection || !selectionPath) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    selectionPath.lineTo(x, y);
+
+    // Create a temporary canvas for the selection outline
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempSelectedCtx = tempCanvas.getContext("2d");
+    if (!tempSelectedCtx) return;
+
+    // Draw the original canvas content
+    tempSelectedCtx.drawImage(canvas, 0, 0);
+
+    // Draw the selection outline
+    tempSelectedCtx.strokeStyle = "red";
+    tempSelectedCtx.stroke(selectionPath);
+
+    // Clear the main canvas and draw the temporary canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(tempCanvas, 0, 0);
+  };
+
+  const endLasso = () => {
+    setIsDrawingSelection(false);
+    if (!selectionPath) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    selectionPath.closePath();
+
+    // Create a temporary canvas
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext("2d");
+    if (!tempCtx) return;
+
+    // Draw the original canvas content to the temporary canvas
+    tempCtx.drawImage(canvas, 0, 0);
+
+    // Create selection
+    tempCtx.save();
+    tempCtx.clip(selectionPath);
+    const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+    tempCtx.restore();
+
+    setSelection(imageData);
+
+    // Draw selection outline
+    ctx.save();
+    ctx.strokeStyle = "red";
+    ctx.stroke(selectionPath);
+    ctx.restore();
+  };
+  const startDrag = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!selection || !selectionPath) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Check if the click is inside the selection path
+    const ctx = canvas.getContext("2d");
+    if (ctx && ctx.isPointInPath(selectionPath, x, y)) {
+      setDragStart({ x, y });
+    }
+  };
+
+  const drag = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!dragStart || !selection || !selectionPath) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d", {
+      willReadFrequently: true,
+    });
+
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const dx = x - dragStart.x;
+    const dy = y - dragStart.y;
+
+    // Create a temporary canvas
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext("2d", {
+      willReadFrequently: true,
+    });
+    if (!tempCtx) return;
+
+    // Step 1: Draw the original canvas content
+    tempCtx.drawImage(canvas, 0, 0);
+
+    // Step 2: Clear the area inside the original selection path
+    tempCtx.save();
+    tempCtx.clip(selectionPath);
+    tempCtx.clearRect(0, 0, canvas.width, canvas.height);
+    tempCtx.restore();
+
+    // Step 3: Draw the background content to the main canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(tempCanvas, 0, 0);
+
+    // Step 4: Draw the selection at the new position on the main canvas
+    ctx.putImageData(selection, dx, dy);
+
+    // Update the selection path position
+    const updatedPath = new Path2D(selectionPath);
+    const matrix = new DOMMatrix();
+    matrix.translateSelf(dx, dy);
+    updatedPath.addPath(updatedPath, matrix);
+    setSelectionPath(updatedPath);
+
+    // Update drag start position to the current position
+    //   setDragStart({ x, y });
+  };
+
+  const endDrag = () => {
+    setDragStart(null);
+    setSelection(null);
+    setSelectionPath(null);
+    console.log("endDrag called");
+  };
 
   // Used to store the canvas state for export, undo, and redo functionality
   const canvasStates = useRef<Array<ImageData>>([]);
@@ -707,6 +884,9 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       e.preventDefault();
       setIsLassoActive(true);
       setLassoPoints([{ x, y }]);
+    } else if (isSelecting) {
+      e.preventDefault();
+      selection ? startDrag(e) : startLasso(e);
     } else if (isPencil) {
       e.preventDefault();
       setIsPencilActive(true);
@@ -772,6 +952,13 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       });
       ctx.lineTo(x, y);
       ctx.stroke();
+    } else if (isSelecting) {
+      e.preventDefault();
+      if (dragStart && selection) {
+        drag(e);
+      } else if (isDrawingSelection) {
+        drawLasso(e);
+      }
     } else if (isPencil && isPencilActive) {
       //PENCIL TOOL
       const rect = canvasRef.current!.getBoundingClientRect();
@@ -963,7 +1150,7 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   // POINTER MOVE END
 
   // POINTER UP START
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (isCreatingShape) {
       // Finalize the rectangle
       drawRectangle();
@@ -984,6 +1171,13 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
       ctx.globalCompositeOperation = "source-over";
 
       setLassoPoints([]);
+    } else if (isSelecting) {
+      e.preventDefault();
+      if (selection) {
+        endDrag();
+      } else {
+        endLasso();
+      }
     } else if (isPencil && isPencilActive) {
       setIsPencilActive(false);
       const ctx = canvasRef.current!.getContext("2d")!;
@@ -998,7 +1192,6 @@ export const Canvas: React.FC<DrawingCanvasProps> = ({
   // POINTER UP END
   //Custom Cursor
   const diameter = brushWidth / 3;
-  console.log("DrawingCanvas.tsx: diameter: ", brushWidth * 2);
 
   const cursor = circleCursor(diameter);
 
